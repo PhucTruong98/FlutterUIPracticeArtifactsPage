@@ -1,0 +1,405 @@
+[
+  {
+    "id": "bread",
+    "name": "Bread",
+    "country" : "Switzerland",
+    "iconCodePoint": 58857,
+    "obtained": false,
+    "rarity": "common",
+    "description": "A staple food prepared from dough of flour and water",
+    "category": "cuisine",
+    "detailFacts": [
+      "One of the oldest prepared foods",
+      "Exists in various forms around the world",
+      "Essential part of many cultures' diets"
+    ]
+  },
+  {
+    "id": "croissant",
+    "name": "Croissant",
+    "iconCodePoint": 60004,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "common",
+    "description": "A buttery, flaky, viennoiserie pastry",
+    "category": "cuisine",
+    "detailFacts": [
+      "Originated in Austria",
+      "Became a French cultural icon",
+      "Perfect for breakfast with coffee"
+    ]
+  },
+  {
+    "id": "cheese",
+    "name": "Cheese",
+    "iconCodePoint": 60001,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "common",
+    "description": "Dairy product in various textures and flavors",
+    "category": "cuisine",
+    "detailFacts": [
+      "Over 1,800 types worldwide",
+      "Made from milk of cows, goats, and sheep",
+      "Ages and develops complex flavors"
+    ]
+  },
+  {
+    "id": "baguette",
+    "name": "Baguette",
+    "iconCodePoint": 58857,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "common",
+    "description": "Long thin loaf of French bread",
+    "category": "cuisine",
+    "detailFacts": [
+      "Symbol of French culture",
+      "Crispy crust, soft interior",
+      "Best eaten fresh on the same day"
+    ]
+  },
+  {
+    "id": "wine",
+    "name": "Wine",
+    "iconCodePoint": 59368,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "common",
+    "description": "Alcoholic drink made from fermented grapes",
+    "category": "cuisine",
+    "detailFacts": [
+      "Production dates back to 6000 BC",
+      "France is one of the largest wine producers",
+      "Different regions produce unique varieties"
+    ]
+  },
+  {
+    "id": "escargot",
+    "name": "Escargot",
+    "iconCodePoint": 58732,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "rare",
+    "description": "Cooked land snails, a French delicacy",
+    "category": "cuisine",
+    "detailFacts": [
+      "Typically prepared with garlic butter",
+      "Considered a luxury food",
+      "Rich in protein and iron"
+    ]
+  },
+  {
+    "id": "macarons",
+    "name": "Macarons",
+    "iconCodePoint": 59369,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "rare",
+    "description": "Sweet meringue-based confection",
+    "category": "cuisine",
+    "detailFacts": [
+      "Made with egg whites, sugar, and almond flour",
+      "Comes in many flavors and colors",
+      "Popularized by French patisseries"
+    ]
+  },
+  {
+    "id": "truffles",
+    "name": "Truffles",
+    "iconCodePoint": 59500,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "rare",
+    "description": "Rare and expensive edible fungi",
+    "category": "cuisine",
+    "detailFacts": [
+      "Grow underground near tree roots",
+      "Hunted with trained dogs or pigs",
+      "Can cost thousands per pound"
+    ]
+  },
+  {
+    "id": "eiffel_tower",
+    "name": "Eiffel Tower",
+    "iconCodePoint": 57544,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Iconic iron lattice tower in Paris",
+    "category": "landmark",
+    "detailFacts": [
+      "Built in 1889 for the World's Fair",
+      "324 meters tall",
+      "Most visited paid monument in the world",
+      "Originally criticized by Parisians",
+      "Repainted every 7 years"
+    ]
+  },
+  {
+    "id": "mona_lisa",
+    "name": "Mona Lisa",
+    "iconCodePoint": 59958,
+    "country" : "Switzerland",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+
+  {
+    "id": "banh_mi",
+    "name": "Banh Mi",
+    "iconCodePoint": 59343,
+    "country" : "Vietnam",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+
+  {
+    "id": "hu_tieu",
+    "name": "Hu Tieu",
+    "iconCodePoint": 23423,
+    "country" : "Vietnam",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "German",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "USA",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "Venezuela",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "Canada",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "Greenland",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "Chile",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "Guatemala",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "Danmark",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "UAE",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "Samoa",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  },
+  {
+    "id": "sushi",
+    "name": "sushi boat",
+    "iconCodePoint": 68348,
+    "country" : "New Zealand",
+
+    "obtained": false,
+    "rarity": "legendary",
+    "description": "Famous portrait painting by Leonardo da Vinci",
+    "category": "culture",
+    "detailFacts": [
+      "Painted between 1503-1519",
+      "Housed in the Louvre Museum",
+      "Most famous painting in the world",
+      "Her enigmatic smile is world-renowned",
+      "Survived theft in 1911"
+    ]
+  }
+
+
+]
