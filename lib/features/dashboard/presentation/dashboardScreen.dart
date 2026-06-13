@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:practice1/shared/component/CongratsPopUpComponent.dart';
 import 'package:practice1/shared/component/EggHatchingAnimationOverlay.dart';
 import 'package:practice1/shared/component/bigComponent/artifacts/ArtifactsPage.dart';
+import 'package:practice1/shared/component/bigComponent/pachinko/PachinkoGame.dart';
 
 class Dashboardscreen extends StatefulWidget {
   const Dashboardscreen({super.key, required this.title});
@@ -80,7 +81,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
           Container(
             padding: const EdgeInsets.all(8),
             color: Colors.teal[400],
-            child: const Text('Who scream'),
+            child: TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PachinkoGame())), child: Text("Pachinko Game")),
           ),
           Container(
             padding: const EdgeInsets.all(8),
