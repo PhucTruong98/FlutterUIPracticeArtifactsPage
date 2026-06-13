@@ -24,9 +24,10 @@ class _AnimatedButtonState extends State<AnimatedButton>
 
   @override
   void dispose() {
-    super.dispose();
 
     _pulseController.dispose();
+    super.dispose();
+
   }
 
   @override

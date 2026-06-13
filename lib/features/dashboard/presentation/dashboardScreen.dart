@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:practice1/shared/component/CongratsPopUpComponent.dart';
+import 'package:practice1/shared/component/EggHatchingAnimationOverlay.dart';
 import 'package:practice1/shared/component/bigComponent/artifacts/ArtifactsPage.dart';
 
 class Dashboardscreen extends StatefulWidget {
@@ -74,7 +75,7 @@ class _DashboardscreenState extends State<Dashboardscreen> {
           Container(
             padding: const EdgeInsets.all(8),
             color: Colors.teal[300],
-            child: const Text('Sound of screams but the'),
+            child: TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HatchingAnimationOverlay())), child: Text("EggHatchAnimation"))
           ),
           Container(
             padding: const EdgeInsets.all(8),
