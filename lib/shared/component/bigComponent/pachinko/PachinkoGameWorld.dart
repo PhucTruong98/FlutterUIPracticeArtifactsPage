@@ -113,14 +113,14 @@ class PachinkoGameWorld extends Forge2DGame {
     world.add(catchZone);
   }
 
-  /// Spawn a treat at the launch position
-  void spawnTreat() {
+  /// Spawn a treat at the specified position or default launch position
+  void spawnTreat({Vector2? position}) {
     if (currentTreat != null) {
       return; // Only one treat at a time
     }
 
     currentTreat = TreatBody(
-      position: Vector2(1, -boardHeight / 2 + 2), // Near top center
+      position: position ?? Vector2(0, -boardHeight / 2 + 2), // Default to center-top
       radius: treatRadius,
       onPegHit: onPegHit,
       onCaught: onTreatCaught,

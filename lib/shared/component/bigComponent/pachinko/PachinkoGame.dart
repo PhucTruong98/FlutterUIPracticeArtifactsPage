@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
+import 'package:flame/components.dart';
 import 'models/GameState.dart';
 import 'PachinkoGameWorld.dart';
 import 'widgets/TreatInventoryWidget.dart';
@@ -20,6 +21,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
   late GameState gameState;
   late PachinkoGameWorld gameWorld;
   bool isPuppyHappy = false;
+  double _treatPreviewX = 0.0; // Horizontal position for treat drop preview
 
   @override
   void initState() {
@@ -58,8 +60,10 @@ class _PachinkoGameState extends State<PachinkoGame> {
 
   void _loadTreat() {
     if (gameState.loadTreat()) {
-      setState(() {});
-      gameWorld.spawnTreat();
+      setState(() {
+        _treatPreviewX = 0.0; // Reset preview to center
+      });
+      // Don't spawn yet - wait for user to choose position and tap
       gameWorld.overlays.add('tapToDrop');
     }
   }
@@ -68,7 +72,16 @@ class _PachinkoGameState extends State<PachinkoGame> {
     if (gameState.dropTreat()) {
       setState(() {});
       gameWorld.overlays.remove('tapToDrop');
-      // Treat is already spawned, physics will handle the drop
+
+      // Constrain X position between walls (with margin for treat radius)
+      final maxX = PachinkoGameWorld.boardWidth / 2 - 1;
+      final minX = -maxX;
+      final clampedX = _treatPreviewX.clamp(minX, maxX);
+
+      // Now spawn treat at chosen position
+      gameWorld.spawnTreat(
+        position: Vector2(clampedX, -PachinkoGameWorld.boardHeight / 2 + 2),
+      );
     }
   }
 
@@ -126,35 +139,75 @@ class _PachinkoGameState extends State<PachinkoGame> {
                           game: gameWorld,
                           overlayBuilderMap: {
                             'tapToDrop': (context, game) {
-                              return Center(
-                                child: GestureDetector(
-                                  onTap: _dropTreat,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.9),
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
+                              return LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return GestureDetector(
+                                    onHorizontalDragUpdate: (details) {
+                                      setState(() {
+                                        // Convert screen position to world X coordinate
+                                        final screenWidth = constraints.maxWidth;
+                                        final boardWidth = PachinkoGameWorld.boardWidth;
+
+                                        // Map screen X (0 to screenWidth) to world X (-boardWidth/2 to +boardWidth/2)
+                                        final normalizedX = (details.localPosition.dx / screenWidth) * 2 - 1; // -1 to +1
+                                        _treatPreviewX = normalizedX * (boardWidth / 2);
+                                      });
+                                    },
+                                    onTapDown: (details) {
+                                      // Allow tap to also set position before dropping
+                                      final screenWidth = constraints.maxWidth;
+                                      final boardWidth = PachinkoGameWorld.boardWidth;
+                                      final normalizedX = (details.localPosition.dx / screenWidth) * 2 - 1;
+
+                                      setState(() {
+                                        _treatPreviewX = normalizedX * (boardWidth / 2);
+                                      });
+
+                                      _dropTreat();
+                                    },
+                                    child: Stack(
+                                      children: [
+                                        // Visual indicator - vertical line at drop position
+                                        Positioned.fill(
+                                          child: CustomPaint(
+                                            painter: _TreatPreviewPainter(
+                                              treatX: _treatPreviewX,
+                                              boardWidth: PachinkoGameWorld.boardWidth,
+                                            ),
+                                          ),
+                                        ),
+                                        // Instruction text
+                                        Center(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.9),
+                                              borderRadius: BorderRadius.circular(20),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Text(
+                                              '← Drag to aim → Tap to Drop',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF2C3E50),
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
-                                    child: const Text(
-                                      '👆 Tap to Drop',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF2C3E50),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                  );
+                                },
                               );
                             },
                           },
@@ -298,5 +351,73 @@ class _PachinkoGameState extends State<PachinkoGame> {
         ),
       ),
     );
+  }
+}
+
+/// Custom painter to draw treat drop preview indicator
+class _TreatPreviewPainter extends CustomPainter {
+  final double treatX; // World X coordinate
+  final double boardWidth; // World board width
+
+  _TreatPreviewPainter({
+    required this.treatX,
+    required this.boardWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Convert world X coordinate to screen X coordinate
+    // World X goes from -boardWidth/2 to +boardWidth/2
+    // Screen X goes from 0 to size.width
+    final normalizedX = (treatX / (boardWidth / 2) + 1) / 2; // 0 to 1
+    final screenX = normalizedX * size.width;
+
+    // Draw a dashed vertical line at the drop position
+    final paint = Paint()
+      ..color = Colors.yellow.withOpacity(0.8)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+
+    // Draw dashed line from top to bottom
+    const dashHeight = 10.0;
+    const dashSpace = 5.0;
+    double startY = 0;
+
+    while (startY < size.height) {
+      canvas.drawLine(
+        Offset(screenX, startY),
+        Offset(screenX, startY + dashHeight),
+        paint,
+      );
+      startY += dashHeight + dashSpace;
+    }
+
+    // Draw a small circle at the top to indicate drop point
+    final circlePaint = Paint()
+      ..color = Colors.yellow.withOpacity(0.9)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(
+      Offset(screenX, 20),
+      8,
+      circlePaint,
+    );
+
+    // Draw outline for circle
+    final outlinePaint = Paint()
+      ..color = Colors.orange
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(
+      Offset(screenX, 20),
+      8,
+      outlinePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TreatPreviewPainter oldDelegate) {
+    return oldDelegate.treatX != treatX;
   }
 }
