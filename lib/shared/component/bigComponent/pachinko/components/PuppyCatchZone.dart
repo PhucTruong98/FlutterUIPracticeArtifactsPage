@@ -1,9 +1,10 @@
 import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
+import 'TreatBody.dart';
 
 /// Sensor zone at bottom where puppy catches the treat
-class PuppyCatchZone extends BodyComponent {
+class PuppyCatchZone extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final Vector2 size;
   final Function()? onTreatCaught;
@@ -35,6 +36,14 @@ class PuppyCatchZone extends BodyComponent {
     body.createFixture(fixtureDef);
 
     return body;
+  }
+
+  @override
+  void beginContact(Object other, Contact contact) {
+    print('PuppyCatchZone collision with ${other.runtimeType}');
+    if (other is TreatBody) {
+      onTreatCaught?.call();
+    }
   }
 
   @override

@@ -11,7 +11,7 @@ class WallBody extends BodyComponent {
   WallBody({
     required this.start,
     required this.end,
-    this.color = const Color(0xFF8B4513), // Brown color
+    this.color = const Color.fromARGB(255, 255, 0, 0), // Brown color
   });
 
   @override

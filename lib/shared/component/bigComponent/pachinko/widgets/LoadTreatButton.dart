@@ -67,7 +67,7 @@ class _LoadTreatButtonState extends State<LoadTreatButton>
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: widget.enabled
@@ -99,14 +99,14 @@ class _LoadTreatButtonState extends State<LoadTreatButton>
                   Icon(
                     Icons.add_circle_outline,
                     color: Colors.white,
-                    size: 24,
+                    size: 18,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     'Load Treat',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

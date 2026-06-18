@@ -1,4 +1,5 @@
 import 'package:flame/components.dart';
+import 'package:flame/game.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'components/TreatBody.dart';
@@ -7,7 +8,7 @@ import 'components/WallBody.dart';
 import 'components/PuppyCatchZone.dart';
 
 /// Main Forge2D game world for Pachinko physics simulation
-class PachinkoGameWorld extends Forge2DGame with ContactCallbacks {
+class PachinkoGameWorld extends Forge2DGame {
   final Function()? onPegHit;
   final Function()? onTreatCaught;
 
@@ -26,62 +27,50 @@ class PachinkoGameWorld extends Forge2DGame with ContactCallbacks {
     this.onTreatCaught,
   }) : super(
           gravity: Vector2(0, 25), // Downward gravity
+          camera: CameraComponent.withFixedResolution(
+            width: boardWidth,
+            height: boardHeight,
+          ),
+          zoom: 1
         );
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Center camera on the board - zoom out to see the full board
-    camera.viewfinder.position = Vector2(0, 0);
-    camera.viewfinder.zoom = 8;
-
-    // Initialize the board
+    // Initialize the board (zoom is set in constructor)
     _createWalls();
     _createPegs();
     _createCatchZone();
+
+    camera.viewfinder.anchor = Anchor.center;
   }
 
-  @override
-  void render(Canvas canvas) {
-    // Draw background for the game board
-    final bgPaint = Paint()
-      ..color = const Color(0xFFD2B48C).withOpacity(0.2)
-      ..style = PaintingStyle.fill;
 
-    canvas.drawRect(
-      Rect.fromCenter(
-        center: const Offset(0, 0),
-        width: boardWidth,
-        height: boardHeight,
-      ),
-      bgPaint,
-    );
-
-    super.render(canvas);
-  }
 
   /// Create side walls to keep treat on board
   void _createWalls() {
     // Left wall
-    add(WallBody(
+    world.add(WallBody(
       start: Vector2(-boardWidth / 2, -boardHeight / 2),
+
       end: Vector2(-boardWidth / 2, boardHeight / 2),
-      color: const Color(0xFF6B4423),
+
+      color: const Color.fromARGB(255, 255, 0, 0),
     ));
 
     // Right wall
-    add(WallBody(
+    world.add(WallBody(
       start: Vector2(boardWidth / 2, -boardHeight / 2),
       end: Vector2(boardWidth / 2, boardHeight / 2),
-      color: const Color(0xFF6B4423),
+      color: const Color.fromARGB(255, 255, 0, 0),
     ));
 
     // Bottom wall (backstop)
-    add(WallBody(
+    world.add(WallBody(
       start: Vector2(-boardWidth / 2, boardHeight / 2),
       end: Vector2(boardWidth / 2, boardHeight / 2),
-      color: const Color(0xFF6B4423),
+      color: const Color.fromARGB(255, 255, 0, 0),
     ));
   }
 
@@ -101,7 +90,7 @@ class PachinkoGameWorld extends Forge2DGame with ContactCallbacks {
       final offset = isEvenRow ? 0.0 : pegSpacing / 2;
 
       for (int col = 0; col < pegsInRow; col++) {
-        final x = -((pegsInRow - 1) * pegSpacing / 2) + (col * pegSpacing) + offset;
+        final x =  (col * pegSpacing) + offset -((5) * pegSpacing / 2);
 
         final peg = PegBody(
           position: Vector2(x, y),
@@ -109,7 +98,7 @@ class PachinkoGameWorld extends Forge2DGame with ContactCallbacks {
         );
 
         pegs.add(peg);
-        add(peg);
+        world.add(peg);
       }
     }
   }
@@ -121,7 +110,7 @@ class PachinkoGameWorld extends Forge2DGame with ContactCallbacks {
       size: Vector2(boardWidth - 2, 2),
       onTreatCaught: onTreatCaught,
     );
-    add(catchZone);
+    world.add(catchZone);
   }
 
   /// Spawn a treat at the launch position
@@ -131,61 +120,26 @@ class PachinkoGameWorld extends Forge2DGame with ContactCallbacks {
     }
 
     currentTreat = TreatBody(
-      position: Vector2(0, -boardHeight / 2 + 2), // Near top center
+      position: Vector2(1, -boardHeight / 2 + 2), // Near top center
       radius: treatRadius,
       onPegHit: onPegHit,
       onCaught: onTreatCaught,
     );
 
-    add(currentTreat!);
+    world.add(currentTreat!);
   }
 
   /// Remove current treat from the game
   void removeTreat() {
     if (currentTreat != null) {
-      remove(currentTreat!);
+      world.remove(currentTreat!);
       currentTreat = null;
     }
   }
 
-  @override
-  void beginContact(Object a, Object b) {
-    // Check for treat-peg collision
-    if (_isTreatPegCollision(a, b)) {
-      _handlePegCollision(a, b);
-    }
-
-    // Check for treat-catch zone collision
-    if (_isTreatCatchZoneCollision(a, b)) {
-      _handleTreatCaught();
-    }
-  }
-
-  bool _isTreatPegCollision(Object a, Object b) {
-    return (a is TreatBody && b is PegBody) || (a is PegBody && b is TreatBody);
-  }
-
-  bool _isTreatCatchZoneCollision(Object a, Object b) {
-    return (a is TreatBody && b is PuppyCatchZone) ||
-        (a is PuppyCatchZone && b is TreatBody);
-  }
-
-  void _handlePegCollision(Object a, Object b) {
-    final peg = a is PegBody ? a : b as PegBody;
-
-    // Mark peg as hit
-    peg.onHit();
-
-    // Notify game of peg hit
-    onPegHit?.call();
-  }
-
-  void _handleTreatCaught() {
-    // Notify game that treat was caught
-    onTreatCaught?.call();
-
-    // Remove treat after a short delay
-    Future.delayed(const Duration(milliseconds: 500), () {
+  /// Schedule treat removal after a short delay (for animation)
+  void scheduleTreatRemoval({Duration delay = const Duration(milliseconds: 500)}) {
+    Future.delayed(delay, () {
       removeTreat();
     });
   }

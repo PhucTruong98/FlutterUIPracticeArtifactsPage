@@ -67,15 +67,15 @@ class _EnergyGaugeWidgetState extends State<EnergyGaugeWidget>
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFFFB84D).withOpacity(0.9),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
@@ -83,30 +83,30 @@ class _EnergyGaugeWidgetState extends State<EnergyGaugeWidget>
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            'Puppy Energy',
+            'Energy',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           AnimatedBuilder(
             animation: _fillAnimation,
             builder: (context, child) {
               final fillPercentage = _fillAnimation.value;
               return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 200,
-                    height: 30,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.white, width: 2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white, width: 1.5),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(13),
+                      borderRadius: BorderRadius.circular(8.5),
                       child: Stack(
                         children: [
                           FractionallySizedBox(
@@ -126,20 +126,13 @@ class _EnergyGaugeWidgetState extends State<EnergyGaugeWidget>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
-                    '${widget.targetEnergy.toInt()} / ${widget.maxEnergy.toInt()}',
+                    '${widget.targetEnergy.toInt()}/${widget.maxEnergy.toInt()} (${(fillPercentage * 100).toInt()}%)',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    '${(fillPercentage * 100).toInt()}% Full',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 12,
                     ),
                   ),
                 ],

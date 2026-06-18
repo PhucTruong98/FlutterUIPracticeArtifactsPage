@@ -1,9 +1,10 @@
 import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
+import 'TreatBody.dart';
 
 /// Static physics body for Pachinko pegs
-class PegBody extends BodyComponent {
+class PegBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
   bool isHit = false;
@@ -42,6 +43,13 @@ class PegBody extends BodyComponent {
   void onHit() {
     isHit = true;
     hitAnimationTimer = 0.3; // Animation duration in seconds
+  }
+
+  @override
+  void beginContact(Object other, Contact contact) {
+    if (other is TreatBody) {
+      onHit();
+    }
   }
 
   @override

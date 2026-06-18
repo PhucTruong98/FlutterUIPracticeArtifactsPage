@@ -14,7 +14,7 @@ class GameState {
     this.currentScore = 0,
     this.collisionCount = 0,
     this.puppyEnergy = 0,
-    this.maxPuppyEnergy = 5000,
+    this.maxPuppyEnergy = 2000,
     this.isTreatLoaded = false,
     this.isTreatFalling = false,
     this.statusMessage,
@@ -26,7 +26,7 @@ class GameState {
     currentScore = 0;
     collisionCount = 0;
     puppyEnergy = 0;
-    maxPuppyEnergy = 5000;
+    maxPuppyEnergy = 2000;
     isTreatLoaded = false;
     isTreatFalling = false;
     statusMessage = null;

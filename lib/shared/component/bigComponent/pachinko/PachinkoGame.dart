@@ -9,7 +9,7 @@ import 'widgets/LoadTreatButton.dart';
 import 'painters/puppy_painter.dart';
 
 /// Main Pachinko game screen
-class PachinkoGame extends StatefulWidget {
+class PachinkoGame < T extends Game> extends StatefulWidget {
   const PachinkoGame({super.key});
 
   @override
@@ -41,6 +41,9 @@ class _PachinkoGameState extends State<PachinkoGame> {
     setState(() {
       gameState.treatCaught();
       isPuppyHappy = true;
+
+      // Schedule treat removal from the world
+      gameWorld.scheduleTreatRemoval();
 
       // Reset puppy happiness after animation
       Future.delayed(const Duration(seconds: 2), () {
@@ -86,7 +89,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
           children: [
             // Top Section - Inventory and Score
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -104,7 +107,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
             // Middle Section - Pachinko Board
             Expanded(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF8B7355).withOpacity(0.3),
                   borderRadius: BorderRadius.circular(16),
@@ -118,42 +121,44 @@ class _PachinkoGameState extends State<PachinkoGame> {
                     // Game board
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: GameWidget(
-                        game: gameWorld,
-                        overlayBuilderMap: {
-                          'tapToDrop': (context, game) {
-                            return Center(
-                              child: GestureDetector(
-                                onTap: _dropTreat,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
+                      child: SizedBox.expand(
+                        child: GameWidget(
+                          game: gameWorld,
+                          overlayBuilderMap: {
+                            'tapToDrop': (context, game) {
+                              return Center(
+                                child: GestureDetector(
+                                  onTap: _dropTreat,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.9),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Text(
+                                      '👆 Tap to Drop',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF2C3E50),
                                       ),
-                                    ],
-                                  ),
-                                  child: const Text(
-                                    '👆 Tap to Drop',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF2C3E50),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
+                              );
+                            },
                           },
-                        },
+                        ),
                       ),
                     ),
 
@@ -198,32 +203,40 @@ class _PachinkoGameState extends State<PachinkoGame> {
 
             // Bottom Section - Puppy and Energy
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Puppy
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child: CustomPaint(
-                      painter: PuppyPainter(
-                        isHappy: isPuppyHappy,
+                  // Compact row with Puppy and Energy
+                  Row(
+                    children: [
+                      // Smaller Puppy
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: CustomPaint(
+                          painter: PuppyPainter(
+                            isHappy: isPuppyHappy,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                      const SizedBox(width: 12),
 
-                  // Energy Gauge
-                  EnergyGaugeWidget(
-                    currentEnergy: gameState.puppyEnergy,
-                    maxEnergy: gameState.maxPuppyEnergy,
-                    targetEnergy: gameState.puppyEnergy,
+                      // Energy Gauge (expanded to fill remaining space)
+                      Expanded(
+                        child: EnergyGaugeWidget(
+                          currentEnergy: gameState.puppyEnergy,
+                          maxEnergy: gameState.maxPuppyEnergy,
+                          targetEnergy: gameState.puppyEnergy,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // Load Treat Button
                   LoadTreatButton(

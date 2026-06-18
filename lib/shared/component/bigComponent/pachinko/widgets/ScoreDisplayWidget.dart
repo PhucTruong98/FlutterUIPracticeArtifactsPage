@@ -14,10 +14,10 @@ class ScoreDisplayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF9B59B6).withOpacity(0.9),
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
@@ -30,13 +30,13 @@ class ScoreDisplayWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildScoreItem('Score', score.toString()),
-          const SizedBox(width: 20),
+          const SizedBox(width: 12),
           Container(
-            width: 2,
-            height: 30,
+            width: 1.5,
+            height: 24,
             color: Colors.white.withOpacity(0.5),
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 12),
           _buildScoreItem('Hits', collisionCount.toString()),
         ],
       ),
@@ -51,16 +51,16 @@ class ScoreDisplayWidget extends StatelessWidget {
           label,
           style: TextStyle(
             color: Colors.white.withOpacity(0.8),
-            fontSize: 12,
+            fontSize: 10,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 1),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),

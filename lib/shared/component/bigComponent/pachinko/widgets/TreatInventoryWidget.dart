@@ -15,10 +15,10 @@ class TreatInventoryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: const Color(0xFFFF6B35).withOpacity(0.9),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
@@ -34,27 +34,27 @@ class TreatInventoryWidget extends StatelessWidget {
             'Treats',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: List.generate(
               maxTreats,
               (index) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: _buildTreatIcon(index < remainingTreats),
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             '$remainingTreats / $maxTreats',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -65,8 +65,8 @@ class TreatInventoryWidget extends StatelessWidget {
 
   Widget _buildTreatIcon(bool isFilled) {
     return Container(
-      width: 30,
-      height: 30,
+      width: 20,
+      height: 20,
       decoration: BoxDecoration(
         color: isFilled ? Colors.white : Colors.white.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),

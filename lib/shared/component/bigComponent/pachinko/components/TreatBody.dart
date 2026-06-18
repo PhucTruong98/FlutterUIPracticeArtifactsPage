@@ -1,9 +1,11 @@
 import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
+import 'PegBody.dart';
+import 'PuppyCatchZone.dart';
 
 /// Dynamic physics body for the falling treat (dog bone)
-class TreatBody extends BodyComponent {
+class TreatBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
   final Function()? onPegHit;
@@ -31,7 +33,7 @@ class TreatBody extends BodyComponent {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 0.6, // Bounciness
+      restitution: 0.5, // Bounciness
       friction: 0.3,
       density: 1.0,
     );
@@ -39,6 +41,14 @@ class TreatBody extends BodyComponent {
     body.createFixture(fixtureDef);
 
     return body;
+  }
+
+  @override
+  void beginContact(Object other, Contact contact) {
+    if (other is PegBody) {
+      onPegHit?.call();
+    }
+    // Note: PuppyCatchZone handles the onTreatCaught callback
   }
 
   @override
