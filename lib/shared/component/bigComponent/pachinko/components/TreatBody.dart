@@ -10,6 +10,7 @@ import '../PachinkoAssets.dart';
 class TreatBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
+  final PachinkoAssets assets;  // Asset manager for sprites
   final Function()? onPegHit;
   final Function()? onCaught;
 
@@ -17,6 +18,7 @@ class TreatBody extends BodyComponent with ContactCallbacks {
 
   TreatBody({
     required this.position,
+    required this.assets,
     this.radius = 0.5,
     this.onPegHit,
     this.onCaught,
@@ -30,7 +32,7 @@ class TreatBody extends BodyComponent with ContactCallbacks {
     final spriteSize = radius * 2;
 
     _spriteComponent = SpriteComponent(
-      sprite: PachinkoAssets.treat,
+      sprite: assets.treat,
       size: Vector2.all(spriteSize),
       anchor: Anchor.center,
       paint: Paint()..filterQuality = FilterQuality.none, // Pixel-perfect rendering
@@ -54,9 +56,9 @@ class TreatBody extends BodyComponent with ContactCallbacks {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 0.5, // Bounciness
+      restitution: 0.1, // Bounciness
       friction: 0.3,
-      density: 1.0,
+      density: 2.0,
     );
 
     body.createFixture(fixtureDef);

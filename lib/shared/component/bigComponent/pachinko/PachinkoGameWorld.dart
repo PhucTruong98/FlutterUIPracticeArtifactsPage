@@ -16,6 +16,7 @@ class PachinkoGameWorld extends Forge2DGame {
   TreatBody? currentTreat;
   List<PegBody> pegs = [];
   late PuppyCatchZone catchZone;
+  late PachinkoAssets pachinkoAssets;  // Asset manager instance
 
   // Board dimensions (in physics units)
   static const double boardWidth = 20.0;
@@ -39,8 +40,9 @@ class PachinkoGameWorld extends Forge2DGame {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Preload all pixel art assets
-    await PachinkoAssets.loadAll();
+    // Initialize assets with game's image cache and preload all images
+    pachinkoAssets = PachinkoAssets(images);
+    await pachinkoAssets.loadAll();
 
     // Initialize the board (zoom is set in constructor)
     _createBackground();  // Add background first so it renders behind everything
@@ -54,7 +56,7 @@ class PachinkoGameWorld extends Forge2DGame {
   /// Create background sprite
   void _createBackground() {
     final background = SpriteComponent(
-      sprite: PachinkoAssets.skyBackdrop,
+      sprite: pachinkoAssets.skyBackdrop,
       size: Vector2(boardWidth, boardHeight),
       position: Vector2.zero(),
       anchor: Anchor.center,
@@ -68,6 +70,18 @@ class PachinkoGameWorld extends Forge2DGame {
 
   /// Create side walls to keep treat on board
   void _createWalls() {
+
+    //top wall
+
+    world.add(WallBody(
+      start: Vector2(- boardWidth / 2, - boardHeight / 2), 
+      end: Vector2(boardWidth / 2, - boardHeight / 2),
+      color: const Color.fromARGB(255, 255, 0, 0),
+      
+      ));
+
+
+
     // Left wall
     world.add(WallBody(
       start: Vector2(-boardWidth / 2, -boardHeight / 2),
@@ -94,25 +108,27 @@ class PachinkoGameWorld extends Forge2DGame {
 
   /// Create classic Pachinko peg layout
   void _createPegs() {
-    const int rows = 7;
+    const int rows = 5;
+    const int maxCols = 4;
     const double startY = -10.0;
-    const double rowSpacing = 3.0;
-    const double pegSpacing = 2.5;
+    const double rowSpacing = boardHeight / (rows + 1 );
+    const double pegSpacing = boardWidth / (maxCols );
 
     for (int row = 0; row < rows; row++) {
       final y = startY + (row * rowSpacing);
 
       // Staggered pattern - alternate between even and odd peg counts
       final isEvenRow = row % 2 == 0;
-      final pegsInRow = isEvenRow ? 6 : 5;
+      final pegsInRow = isEvenRow ? maxCols : maxCols - 1;
       final offset = isEvenRow ? 0.0 : pegSpacing / 2;
 
       for (int col = 0; col < pegsInRow; col++) {
-        final x =  (col * pegSpacing) + offset -((5) * pegSpacing / 2);
+        final x =  (col * pegSpacing) + offset -((maxCols - 1) * pegSpacing / 2);
 
         final peg = PegBody(
           position: Vector2(x, y),
           radius: pegRadius,
+          assets: pachinkoAssets,
         );
 
         pegs.add(peg);
@@ -140,6 +156,7 @@ class PachinkoGameWorld extends Forge2DGame {
     currentTreat = TreatBody(
       position: position ?? Vector2(0, -boardHeight / 2 + 2), // Default to center-top
       radius: treatRadius,
+      assets: pachinkoAssets,
       onPegHit: onPegHit,
       onCaught: onTreatCaught,
     );

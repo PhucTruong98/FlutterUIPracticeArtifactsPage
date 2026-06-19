@@ -1,8 +1,17 @@
 import 'package:flame/components.dart';
-import 'package:flame/flame.dart';
+import 'package:flame/cache.dart';
 
 /// Centralized asset loader for Pachinko pixel art sprites
+///
+/// This class wraps the game's image cache and provides convenient
+/// access to sprites following Flame's best practices pattern:
+/// 1. Preload images with loadAll()
+/// 2. Access sprites synchronously via getters using game.images.fromCache()
 class PachinkoAssets {
+  final Images images;  // Game's image cache instance
+
+  PachinkoAssets(this.images);
+
   // Asset paths
   static const String _basePath = 'pachinko/';
 
@@ -13,102 +22,58 @@ class PachinkoAssets {
   static const String puppyHappyPath = '${_basePath}puppy_happy.png';
   static const String skyBackdropPath = '${_basePath}skyBackDrop.png';
 
-  // Cached sprites
-  static Sprite? _pegNormal;
-  static Sprite? _pegHit;
-  static Sprite? _treat;
-  static Sprite? _puppyNormal;
-  static Sprite? _puppyHappy;
-  static Sprite? _skyBackdrop;
+  // Sprite metadata (srcSize values for pixel art)
+  static final Vector2 pegSize = Vector2.all(8);
+  static final Vector2 treatSize = Vector2.all(16);
+  static final Vector2 puppySize = Vector2.all(64);
 
-  /// Preload all pachinko assets
-  static Future<void> loadAll() async {
-    await Future.wait([
-      _loadPegSprites(),
-      _loadTreatSprite(),
-      _loadPuppySprites(),
-      _loadBackgroundSprite(),
+  /// Preload all pachinko images into the game's image cache
+  ///
+  /// Call this once during game initialization (in onLoad).
+  /// Images are loaded asynchronously and cached for instant synchronous access.
+  Future<void> loadAll() async {
+    await images.loadAll([
+      pegNormalPath,
+      pegHitPath,
+      treatPath,
+      puppyNormalPath,
+      puppyHappyPath,
+      skyBackdropPath,
     ]);
   }
 
-  /// Load peg sprites
-  static Future<void> _loadPegSprites() async {
-    _pegNormal = await Sprite.load(
-      pegNormalPath,
-      srcSize: Vector2.all(8), // Assuming 32x32 sprites
-    );
-    _pegHit = await Sprite.load(
-      pegHitPath,
-      srcSize: Vector2.all(8),
-    );
-  }
+  /// Getters create sprites on-demand from cached images
+  ///
+  /// These are synchronous and fast - just wrapping the cached image
+  /// with sprite metadata. Can be called repeatedly without performance impact.
 
-  /// Load treat sprite
-  static Future<void> _loadTreatSprite() async {
-    _treat = await Sprite.load(
-      treatPath,
-      srcSize: Vector2.all(16),
-    );
-  }
+  Sprite get pegNormal => Sprite(
+        images.fromCache(pegNormalPath),
+        srcSize: pegSize,
+      );
 
-  /// Load puppy sprites
-  static Future<void> _loadPuppySprites() async {
-    _puppyNormal = await Sprite.load(
-      puppyNormalPath,
-      srcSize: Vector2.all(64), // Assuming 64x64 or will scale
-    );
-    _puppyHappy = await Sprite.load(
-      puppyHappyPath,
-      srcSize: Vector2.all(64),
-    );
-  }
+  Sprite get pegHit => Sprite(
+        images.fromCache(pegHitPath),
+        srcSize: pegSize,
+      );
 
-  /// Load background sprite
-  static Future<void> _loadBackgroundSprite() async {
-    _skyBackdrop = await Sprite.load(
-      skyBackdropPath,
-      // No srcSize specified - use full image dimensions (772x1030)
-    );
-  }
+  Sprite get treat => Sprite(
+        images.fromCache(treatPath),
+        srcSize: treatSize,
+      );
 
-  // Getters for sprites
-  static Sprite get pegNormal {
-    assert(_pegNormal != null, 'Peg normal sprite not loaded. Call loadAll() first.');
-    return _pegNormal!;
-  }
+  Sprite get puppyNormal => Sprite(
+        images.fromCache(puppyNormalPath),
+        srcSize: puppySize,
+      );
 
-  static Sprite get pegHit {
-    assert(_pegHit != null, 'Peg hit sprite not loaded. Call loadAll() first.');
-    return _pegHit!;
-  }
+  Sprite get puppyHappy => Sprite(
+        images.fromCache(puppyHappyPath),
+        srcSize: puppySize,
+      );
 
-  static Sprite get treat {
-    assert(_treat != null, 'Treat sprite not loaded. Call loadAll() first.');
-    return _treat!;
-  }
-
-  static Sprite get puppyNormal {
-    assert(_puppyNormal != null, 'Puppy normal sprite not loaded. Call loadAll() first.');
-    return _puppyNormal!;
-  }
-
-  static Sprite get puppyHappy {
-    assert(_puppyHappy != null, 'Puppy happy sprite not loaded. Call loadAll() first.');
-    return _puppyHappy!;
-  }
-
-  static Sprite get skyBackdrop {
-    assert(_skyBackdrop != null, 'Sky backdrop sprite not loaded. Call loadAll() first.');
-    return _skyBackdrop!;
-  }
-
-  /// Clear all cached sprites
-  static void clear() {
-    _pegNormal = null;
-    _pegHit = null;
-    _treat = null;
-    _puppyNormal = null;
-    _puppyHappy = null;
-    _skyBackdrop = null;
-  }
+  Sprite get skyBackdrop => Sprite(
+        images.fromCache(skyBackdropPath),
+        // No srcSize - use full image dimensions (772x1030)
+      );
 }

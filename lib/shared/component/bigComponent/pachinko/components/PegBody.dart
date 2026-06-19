@@ -19,6 +19,7 @@ enum PegState {
 class PegBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
+  final PachinkoAssets assets;  // Asset manager for sprites
 
   // State management
   PegState _state = PegState.normal;
@@ -28,6 +29,7 @@ class PegBody extends BodyComponent with ContactCallbacks {
 
   PegBody({
     required this.position,
+    required this.assets,
     this.radius = 0.3,
   });
 
@@ -67,7 +69,7 @@ class PegBody extends BodyComponent with ContactCallbacks {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 0.8, // High bounciness for pegs
+      restitution: 1.3, // High bounciness for pegs
       friction: 0.1,
     );
 
@@ -119,12 +121,12 @@ class PegBody extends BodyComponent with ContactCallbacks {
   Sprite _getSpriteForState(PegState state) {
     switch (state) {
       case PegState.normal:
-        return PachinkoAssets.pegNormal;
+        return assets.pegNormal;
       case PegState.hit:
-        return PachinkoAssets.pegHit;
+        return assets.pegHit;
       // When adding new states, add cases here:
       // case PegState.poweredUp:
-      //   return PachinkoAssets.pegPoweredUp;
+      //   return assets.pegPoweredUp;
     }
   }
 
