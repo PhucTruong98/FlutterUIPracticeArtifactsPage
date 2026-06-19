@@ -1,4 +1,5 @@
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -91,6 +92,18 @@ class PegBody extends BodyComponent with ContactCallbacks {
   void onHit() {
     if (_state != PegState.hit) {
       _setState(PegState.hit, duration: 0.3); // Return to normal after 0.3s
+
+      // Add elastic bounce scale animation
+      _spriteComponent.add(
+        ScaleEffect.by(
+          Vector2.all(1.15), // Scale up by 15%
+          EffectController(
+            duration: 0.3,
+            curve: Curves.elasticOut, // Springy overshoot effect
+            alternate: true, // Return to normal size
+          ),
+        ),
+      );
     }
   }
 

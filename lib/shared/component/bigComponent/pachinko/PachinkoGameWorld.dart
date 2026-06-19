@@ -22,7 +22,7 @@ class PachinkoGameWorld extends Forge2DGame {
   static const double boardWidth = 20.0;
   static const double boardHeight = 30.0;
   static const double pegRadius = 0.6;
-  static const double treatRadius = 0.6;
+  static const double treatRadius = 1.0;
 
   PachinkoGameWorld({
     this.onPegHit,
