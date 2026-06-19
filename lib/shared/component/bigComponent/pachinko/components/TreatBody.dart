@@ -1,8 +1,10 @@
 import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'PegBody.dart';
 import 'PuppyCatchZone.dart';
+import '../PachinkoAssets.dart';
 
 /// Dynamic physics body for the falling treat (dog bone)
 class TreatBody extends BodyComponent with ContactCallbacks {
@@ -11,12 +13,31 @@ class TreatBody extends BodyComponent with ContactCallbacks {
   final Function()? onPegHit;
   final Function()? onCaught;
 
+  late SpriteComponent _spriteComponent;
+
   TreatBody({
     required this.position,
     this.radius = 0.5,
     this.onPegHit,
     this.onCaught,
   });
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+
+    // Create sprite component for pixel art rendering
+    final spriteSize = radius * 2;
+
+    _spriteComponent = SpriteComponent(
+      sprite: PachinkoAssets.treat,
+      size: Vector2.all(spriteSize),
+      anchor: Anchor.center,
+      paint: Paint()..filterQuality = FilterQuality.none, // Pixel-perfect rendering
+    );
+
+    add(_spriteComponent);
+  }
 
   @override
   Body createBody() {
@@ -49,46 +70,5 @@ class TreatBody extends BodyComponent with ContactCallbacks {
       onPegHit?.call();
     }
     // Note: PuppyCatchZone handles the onTreatCaught callback
-  }
-
-  @override
-  void render(Canvas canvas) {
-    // Draw treat as a bone shape using simple shapes
-    final paint = Paint()
-      ..color = const Color(0xFFD2B48C) // Tan color
-      ..style = PaintingStyle.fill;
-
-    final outlinePaint = Paint()
-      ..color = const Color(0xFF8B7355) // Darker brown
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.03;
-
-    // Simplified bone shape - horizontal bar with circles at ends
-    final boneLength = radius * 1.5;
-    final boneThickness = radius * 0.4;
-    final endRadius = radius * 0.35;
-
-    // Left end circles
-    canvas.drawCircle(Offset(-boneLength / 2, -endRadius * 0.3), endRadius * 0.5, paint);
-    canvas.drawCircle(Offset(-boneLength / 2, endRadius * 0.3), endRadius * 0.5, paint);
-
-    // Right end circles
-    canvas.drawCircle(Offset(boneLength / 2, -endRadius * 0.3), endRadius * 0.5, paint);
-    canvas.drawCircle(Offset(boneLength / 2, endRadius * 0.3), endRadius * 0.5, paint);
-
-    // Center bar
-    final rect = Rect.fromCenter(
-      center: Offset.zero,
-      width: boneLength,
-      height: boneThickness,
-    );
-    canvas.drawRect(rect, paint);
-
-    // Outlines
-    canvas.drawCircle(Offset(-boneLength / 2, -endRadius * 0.3), endRadius * 0.5, outlinePaint);
-    canvas.drawCircle(Offset(-boneLength / 2, endRadius * 0.3), endRadius * 0.5, outlinePaint);
-    canvas.drawCircle(Offset(boneLength / 2, -endRadius * 0.3), endRadius * 0.5, outlinePaint);
-    canvas.drawCircle(Offset(boneLength / 2, endRadius * 0.3), endRadius * 0.5, outlinePaint);
-    canvas.drawRect(rect, outlinePaint);
   }
 }

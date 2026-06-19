@@ -1,19 +1,56 @@
 import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'TreatBody.dart';
+import '../PachinkoAssets.dart';
+
+/// Enum representing all possible states for a peg
+enum PegState {
+  normal,   // Default state
+  hit,      // Peg was just hit by treat
+  // Easy to add more states:
+  // poweredUp,
+  // damaged,
+  // frozen,
+}
 
 /// Static physics body for Pachinko pegs
 class PegBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
-  bool isHit = false;
-  double hitAnimationTimer = 0;
+
+  // State management
+  PegState _state = PegState.normal;
+  TimerComponent? _stateTimer;
+
+  late SpriteComponent _spriteComponent;
 
   PegBody({
     required this.position,
     this.radius = 0.3,
   });
+
+  /// Public getter for current state
+  PegState get state => _state;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+
+    // Create sprite component for pixel art rendering
+    // Sprite size should match physics body radius (radius * 2 for diameter)
+    final spriteSize = radius * 2;
+
+    _spriteComponent = SpriteComponent(
+      sprite: _getSpriteForState(_state),
+      size: Vector2.all(spriteSize),
+      anchor: Anchor.center,
+      paint: Paint()..filterQuality = FilterQuality.none, // Pixel-perfect rendering
+    );
+
+    add(_spriteComponent);
+  }
 
   @override
   Body createBody() {
@@ -39,12 +76,6 @@ class PegBody extends BodyComponent with ContactCallbacks {
     return body;
   }
 
-  /// Mark peg as hit and start animation
-  void onHit() {
-    isHit = true;
-    hitAnimationTimer = 0.3; // Animation duration in seconds
-  }
-
   @override
   void beginContact(Object other, Contact contact) {
     if (other is TreatBody) {
@@ -52,49 +83,70 @@ class PegBody extends BodyComponent with ContactCallbacks {
     }
   }
 
-  @override
-  void update(double dt) {
-    super.update(dt);
+  // No update() method needed - TimerComponent handles timing automatically!
 
-    // Countdown hit animation
-    if (hitAnimationTimer > 0) {
-      hitAnimationTimer -= dt;
-      if (hitAnimationTimer <= 0) {
-        isHit = false;
+  /// Mark peg as hit and start animation
+  void onHit() {
+    if (_state != PegState.hit) {
+      _setState(PegState.hit, duration: 0.3); // Return to normal after 0.3s
+    }
+  }
+
+  /// Set the peg to a new state
+  void _setState(PegState newState, {double? duration}) {
+    if (_state != newState) {
+      _state = newState;
+      _spriteComponent.sprite = _getSpriteForState(newState);
+
+      // Cancel previous timer if exists
+      _stateTimer?.removeFromParent();
+      _stateTimer = null;
+
+      // Create new timer if duration specified
+      if (duration != null) {
+        _stateTimer = TimerComponent(
+          period: duration,
+          repeat: false,
+          onTick: () => _handleStateTimeout(),
+          removeOnFinish: true,
+        );
+        add(_stateTimer!);
       }
     }
   }
 
-  @override
-  void render(Canvas canvas) {
-    // Draw peg as a simple circle with gradient effect
-    final paint = Paint()
-      ..color = isHit ? const Color(0xFFFFD700) : const Color(0xFFFF8C00)
-      ..style = PaintingStyle.fill;
-
-    // Main circle
-    canvas.drawCircle(Offset.zero, radius, paint);
-
-    // Shine effect
-    final shinePaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(-radius * 0.25, -radius * 0.25), radius * 0.3, shinePaint);
-
-    // Outline
-    final outlinePaint = Paint()
-      ..color = const Color(0xFF8B4513).withOpacity(0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.05;
-    canvas.drawCircle(Offset.zero, radius, outlinePaint);
-
-    // Glow when hit
-    if (isHit) {
-      final glowPaint = Paint()
-        ..color = const Color(0xFFFFD700).withOpacity(0.3)
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.2);
-      canvas.drawCircle(Offset.zero, radius * 1.5, glowPaint);
+  /// Get the sprite corresponding to a state
+  Sprite _getSpriteForState(PegState state) {
+    switch (state) {
+      case PegState.normal:
+        return PachinkoAssets.pegNormal;
+      case PegState.hit:
+        return PachinkoAssets.pegHit;
+      // When adding new states, add cases here:
+      // case PegState.poweredUp:
+      //   return PachinkoAssets.pegPoweredUp;
     }
+  }
+
+  /// Handle what happens when state timer expires
+  void _handleStateTimeout() {
+    switch (_state) {
+      case PegState.hit:
+        // Return to normal after hit animation
+        _setState(PegState.normal);
+        break;
+      case PegState.normal:
+        // Normal state doesn't timeout
+        break;
+      // Add timeout behavior for other states here
+    }
+  }
+
+  @override
+  void onRemove() {
+    // Clean up timer when component is removed
+    _stateTimer?.removeFromParent();
+    _stateTimer = null;
+    super.onRemove();
   }
 }

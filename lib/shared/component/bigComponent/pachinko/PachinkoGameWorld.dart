@@ -6,6 +6,7 @@ import 'components/TreatBody.dart';
 import 'components/PegBody.dart';
 import 'components/WallBody.dart';
 import 'components/PuppyCatchZone.dart';
+import 'PachinkoAssets.dart';
 
 /// Main Forge2D game world for Pachinko physics simulation
 class PachinkoGameWorld extends Forge2DGame {
@@ -19,8 +20,8 @@ class PachinkoGameWorld extends Forge2DGame {
   // Board dimensions (in physics units)
   static const double boardWidth = 20.0;
   static const double boardHeight = 30.0;
-  static const double pegRadius = 0.3;
-  static const double treatRadius = 0.5;
+  static const double pegRadius = 0.6;
+  static const double treatRadius = 0.6;
 
   PachinkoGameWorld({
     this.onPegHit,
@@ -37,6 +38,9 @@ class PachinkoGameWorld extends Forge2DGame {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // Preload all pixel art assets
+    await PachinkoAssets.loadAll();
 
     // Initialize the board (zoom is set in constructor)
     _createWalls();
