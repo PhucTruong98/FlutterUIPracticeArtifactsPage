@@ -11,6 +11,7 @@ class PachinkoAssets {
   static const String treatPath = '${_basePath}treat.png';
   static const String puppyNormalPath = '${_basePath}puppy_normal.png';
   static const String puppyHappyPath = '${_basePath}puppy_happy.png';
+  static const String skyBackdropPath = '${_basePath}skyBackDrop.png';
 
   // Cached sprites
   static Sprite? _pegNormal;
@@ -18,6 +19,7 @@ class PachinkoAssets {
   static Sprite? _treat;
   static Sprite? _puppyNormal;
   static Sprite? _puppyHappy;
+  static Sprite? _skyBackdrop;
 
   /// Preload all pachinko assets
   static Future<void> loadAll() async {
@@ -25,6 +27,7 @@ class PachinkoAssets {
       _loadPegSprites(),
       _loadTreatSprite(),
       _loadPuppySprites(),
+      _loadBackgroundSprite(),
     ]);
   }
 
@@ -60,6 +63,14 @@ class PachinkoAssets {
     );
   }
 
+  /// Load background sprite
+  static Future<void> _loadBackgroundSprite() async {
+    _skyBackdrop = await Sprite.load(
+      skyBackdropPath,
+      // No srcSize specified - use full image dimensions (772x1030)
+    );
+  }
+
   // Getters for sprites
   static Sprite get pegNormal {
     assert(_pegNormal != null, 'Peg normal sprite not loaded. Call loadAll() first.');
@@ -86,6 +97,11 @@ class PachinkoAssets {
     return _puppyHappy!;
   }
 
+  static Sprite get skyBackdrop {
+    assert(_skyBackdrop != null, 'Sky backdrop sprite not loaded. Call loadAll() first.');
+    return _skyBackdrop!;
+  }
+
   /// Clear all cached sprites
   static void clear() {
     _pegNormal = null;
@@ -93,5 +109,6 @@ class PachinkoAssets {
     _treat = null;
     _puppyNormal = null;
     _puppyHappy = null;
+    _skyBackdrop = null;
   }
 }

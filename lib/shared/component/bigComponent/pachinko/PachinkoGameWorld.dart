@@ -43,11 +43,25 @@ class PachinkoGameWorld extends Forge2DGame {
     await PachinkoAssets.loadAll();
 
     // Initialize the board (zoom is set in constructor)
+    _createBackground();  // Add background first so it renders behind everything
     _createWalls();
     _createPegs();
     _createCatchZone();
 
     camera.viewfinder.anchor = Anchor.center;
+  }
+
+  /// Create background sprite
+  void _createBackground() {
+    final background = SpriteComponent(
+      sprite: PachinkoAssets.skyBackdrop,
+      size: Vector2(boardWidth, boardHeight),
+      position: Vector2.zero(),
+      anchor: Anchor.center,
+      paint: Paint()..filterQuality = FilterQuality.none, // Pixel-perfect rendering
+    );
+
+    world.add(background);
   }
 
 
