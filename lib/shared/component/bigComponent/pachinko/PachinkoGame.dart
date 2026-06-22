@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'models/GameState.dart';
@@ -34,27 +35,37 @@ class _PachinkoGameState extends State<PachinkoGame> {
   }
 
   void _handlePegHit() {
-    setState(() {
-      gameState.recordPegHit();
+    // Defer setState to avoid calling during build phase
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          gameState.recordPegHit();
+        });
+      }
     });
   }
 
   void _handleTreatCaught() {
-    setState(() {
-      gameState.treatCaught();
-      isPuppyHappy = true;
+    // Defer setState to avoid calling during build phase
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          gameState.treatCaught();
+          isPuppyHappy = true;
 
-      // Schedule treat removal from the world
-      gameWorld.scheduleTreatRemoval();
+          // Schedule treat removal from the world
+          gameWorld.scheduleTreatRemoval();
 
-      // Reset puppy happiness after animation
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            isPuppyHappy = false;
+          // Reset puppy happiness after animation
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              setState(() {
+                isPuppyHappy = false;
+              });
+            }
           });
-        }
-      });
+        });
+      }
     });
   }
 
@@ -143,14 +154,19 @@ class _PachinkoGameState extends State<PachinkoGame> {
                                 builder: (context, constraints) {
                                   return GestureDetector(
                                     onHorizontalDragUpdate: (details) {
-                                      setState(() {
-                                        // Convert screen position to world X coordinate
-                                        final screenWidth = constraints.maxWidth;
-                                        final boardWidth = PachinkoGameWorld.boardWidth;
+                                      // Defer setState to after current build completes
+                                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                                        if (mounted) {
+                                          setState(() {
+                                            // Convert screen position to world X coordinate
+                                            final screenWidth = constraints.maxWidth;
+                                            final boardWidth = PachinkoGameWorld.boardWidth;
 
-                                        // Map screen X (0 to screenWidth) to world X (-boardWidth/2 to +boardWidth/2)
-                                        final normalizedX = (details.localPosition.dx / screenWidth) * 2 - 1; // -1 to +1
-                                        _treatPreviewX = normalizedX * (boardWidth / 2);
+                                            // Map screen X (0 to screenWidth) to world X (-boardWidth/2 to +boardWidth/2)
+                                            final normalizedX = (details.localPosition.dx / screenWidth) * 2 - 1; // -1 to +1
+                                            _treatPreviewX = normalizedX * (boardWidth / 2);
+                                          });
+                                        }
                                       });
                                     },
                                     onTapDown: (details) {
@@ -159,11 +175,15 @@ class _PachinkoGameState extends State<PachinkoGame> {
                                       final boardWidth = PachinkoGameWorld.boardWidth;
                                       final normalizedX = (details.localPosition.dx / screenWidth) * 2 - 1;
 
-                                      setState(() {
-                                        _treatPreviewX = normalizedX * (boardWidth / 2);
+                                      // Defer setState to after current build completes
+                                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                                        if (mounted) {
+                                          setState(() {
+                                            _treatPreviewX = normalizedX * (boardWidth / 2);
+                                          });
+                                          _dropTreat();
+                                        }
                                       });
-
-                                      _dropTreat();
                                     },
                                     child: Stack(
                                       children: [
