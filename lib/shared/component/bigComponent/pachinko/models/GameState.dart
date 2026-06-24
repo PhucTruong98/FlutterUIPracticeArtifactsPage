@@ -1,12 +1,14 @@
+import 'package:flutter/foundation.dart';
+
 /// Game state model for Pachinko game
-class GameState {
+class GameState extends ChangeNotifier {
+  static const double maxPuppyEnergy = 2000.0;
+
   int remainingTreats;
   int currentScore;
   int collisionCount;
   double puppyEnergy;
-  double maxPuppyEnergy;
   bool isTreatLoaded;
-  bool isTreatFalling;
   String? statusMessage;
 
   GameState({
@@ -14,9 +16,7 @@ class GameState {
     this.currentScore = 0,
     this.collisionCount = 0,
     this.puppyEnergy = 0,
-    this.maxPuppyEnergy = 2000,
     this.isTreatLoaded = false,
-    this.isTreatFalling = false,
     this.statusMessage,
   });
 
@@ -26,18 +26,18 @@ class GameState {
     currentScore = 0;
     collisionCount = 0;
     puppyEnergy = 0;
-    maxPuppyEnergy = 2000;
     isTreatLoaded = false;
-    isTreatFalling = false;
     statusMessage = null;
+    notifyListeners();
   }
 
   /// Load a treat (consume from inventory)
   bool loadTreat() {
-    if (remainingTreats > 0 && !isTreatLoaded && !isTreatFalling) {
+    if (remainingTreats > 0 && !isTreatLoaded) {
       remainingTreats--;
       isTreatLoaded = true;
       statusMessage = 'Tap to Drop';
+      notifyListeners();
       return true;
     }
     return false;
@@ -45,10 +45,10 @@ class GameState {
 
   /// Drop the loaded treat
   bool dropTreat() {
-    if (isTreatLoaded && !isTreatFalling) {
+    if (isTreatLoaded) {
       isTreatLoaded = false;
-      isTreatFalling = true;
       statusMessage = null;
+      notifyListeners();
       return true;
     }
     return false;
@@ -58,16 +58,15 @@ class GameState {
   void recordPegHit() {
     collisionCount++;
     currentScore += 50;
+    notifyListeners();
   }
 
   /// Treat caught by puppy - end round
   void treatCaught() {
-    isTreatFalling = false;
-
     // Add energy based on score
     puppyEnergy += currentScore;
-    if (puppyEnergy > maxPuppyEnergy) {
-      puppyEnergy = maxPuppyEnergy;
+    if (puppyEnergy > GameState.maxPuppyEnergy) {
+      puppyEnergy = GameState.maxPuppyEnergy;
     }
 
     statusMessage = 'Treat Collected! $currentScore Points';
@@ -75,37 +74,25 @@ class GameState {
     // Reset round score and collision count
     currentScore = 0;
     collisionCount = 0;
+    notifyListeners();
+  }
+
+  /// Treat missed (timed out or settled without being caught)
+  void treatMissed() {
+    statusMessage = 'Missed!';
+
+    // Reset round score and collision count
+    currentScore = 0;
+    collisionCount = 0;
+    notifyListeners();
   }
 
   /// Get energy percentage (0.0 to 1.0)
-  double get energyPercentage => puppyEnergy / maxPuppyEnergy;
+  double get energyPercentage => puppyEnergy / GameState.maxPuppyEnergy;
 
-  /// Check if can load treat
-  bool get canLoadTreat => remainingTreats > 0 && !isTreatLoaded && !isTreatFalling;
+  /// Check if can load treat (note: caller should also check world.currentTreat == null)
+  bool get canLoadTreat => remainingTreats > 0 && !isTreatLoaded;
 
-  /// Check if game is over
-  bool get isGameOver => remainingTreats == 0 && !isTreatLoaded && !isTreatFalling;
-
-  /// Create a copy with updated values
-  GameState copyWith({
-    int? remainingTreats,
-    int? currentScore,
-    int? collisionCount,
-    double? puppyEnergy,
-    double? maxPuppyEnergy,
-    bool? isTreatLoaded,
-    bool? isTreatFalling,
-    String? statusMessage,
-  }) {
-    return GameState(
-      remainingTreats: remainingTreats ?? this.remainingTreats,
-      currentScore: currentScore ?? this.currentScore,
-      collisionCount: collisionCount ?? this.collisionCount,
-      puppyEnergy: puppyEnergy ?? this.puppyEnergy,
-      maxPuppyEnergy: maxPuppyEnergy ?? this.maxPuppyEnergy,
-      isTreatLoaded: isTreatLoaded ?? this.isTreatLoaded,
-      isTreatFalling: isTreatFalling ?? this.isTreatFalling,
-      statusMessage: statusMessage,
-    );
-  }
+  /// Check if game is over (note: caller should also check world.currentTreat == null)
+  bool get isGameOver => remainingTreats == 0 && !isTreatLoaded;
 }

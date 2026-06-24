@@ -2,17 +2,19 @@ import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'TreatBody.dart';
+import '../models/GameState.dart';
+import '../PachinkoGameWorld.dart';
 
 /// Sensor zone at bottom where puppy catches the treat
 class PuppyCatchZone extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final Vector2 size;
-  final Function()? onTreatCaught;
+  final GameState gameState;
 
   PuppyCatchZone({
     required this.position,
     required this.size,
-    this.onTreatCaught,
+    required this.gameState,
   });
 
   @override
@@ -42,7 +44,26 @@ class PuppyCatchZone extends BodyComponent with ContactCallbacks {
   void beginContact(Object other, Contact contact) {
     print('PuppyCatchZone collision with ${other.runtimeType}');
     if (other is TreatBody) {
-      onTreatCaught?.call();
+      // Update game state
+      gameState.treatCaught();
+
+      // Get the world to clear currentTreat and cancel miss timer
+      // We use a timer to delay removal slightly for visual feedback
+      final gameWorld = parent?.parent;
+      if (gameWorld != null) {
+        final timer = TimerComponent(
+          period: 0.5,
+          repeat: false,
+          onTick: () {
+            // Call the world's removeTreat to properly clean up
+            if (gameWorld is Forge2DWorld && gameWorld is PachinkoGameWorld) {
+              (gameWorld as PachinkoGameWorld).removeTreat();
+            }
+          },
+          removeOnFinish: true,
+        );
+        parent?.add(timer);
+      }
     }
   }
 

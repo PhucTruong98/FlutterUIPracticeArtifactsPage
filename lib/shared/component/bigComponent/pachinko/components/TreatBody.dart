@@ -2,26 +2,23 @@ import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
-import 'PegBody.dart';
-import 'PuppyCatchZone.dart';
 import '../PachinkoAssets.dart';
+import '../models/GameState.dart';
 
 /// Dynamic physics body for the falling treat (dog bone)
 class TreatBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
   final PachinkoAssets assets;  // Asset manager for sprites
-  final Function()? onPegHit;
-  final Function()? onCaught;
+  final GameState gameState;
 
   late SpriteComponent _spriteComponent;
 
   TreatBody({
     required this.position,
     required this.assets,
+    required this.gameState,
     this.radius = 0.5,
-    this.onPegHit,
-    this.onCaught,
   });
 
   @override
@@ -68,9 +65,7 @@ class TreatBody extends BodyComponent with ContactCallbacks {
 
   @override
   void beginContact(Object other, Contact contact) {
-    if (other is PegBody) {
-      onPegHit?.call();
-    }
-    // Note: PuppyCatchZone handles the onTreatCaught callback
+    // Stage 3 will add gameState.recordPegHit() call here
+    // Note: PuppyCatchZone handles the treat caught logic
   }
 }

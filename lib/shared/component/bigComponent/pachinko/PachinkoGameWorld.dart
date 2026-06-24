@@ -7,16 +7,17 @@ import 'components/PegBody.dart';
 import 'components/WallBody.dart';
 import 'components/PuppyCatchZone.dart';
 import 'PachinkoAssets.dart';
+import 'models/GameState.dart';
 
 /// Main Forge2D game world for Pachinko physics simulation
 class PachinkoGameWorld extends Forge2DGame {
-  final Function()? onPegHit;
-  final Function()? onTreatCaught;
+  final GameState gameState;
 
   TreatBody? currentTreat;
   List<PegBody> pegs = [];
   late PuppyCatchZone catchZone;
   late PachinkoAssets pachinkoAssets;  // Asset manager instance
+  TimerComponent? _treatMissTimer;  // Timer to detect missed treats
 
   // Board dimensions (in physics units)
   static const double boardWidth = 20.0;
@@ -25,8 +26,7 @@ class PachinkoGameWorld extends Forge2DGame {
   static const double treatRadius = 1.0;
 
   PachinkoGameWorld({
-    this.onPegHit,
-    this.onTreatCaught,
+    required this.gameState,
   }) : super(
           gravity: Vector2(0, 25), // Downward gravity
           camera: CameraComponent.withFixedResolution(
@@ -129,6 +129,7 @@ class PachinkoGameWorld extends Forge2DGame {
           position: Vector2(x, y),
           radius: pegRadius,
           assets: pachinkoAssets,
+          gameState: gameState,
         );
 
         pegs.add(peg);
@@ -142,7 +143,7 @@ class PachinkoGameWorld extends Forge2DGame {
     catchZone = PuppyCatchZone(
       position: Vector2(0, boardHeight / 2 - 2),
       size: Vector2(boardWidth - 2, 2),
-      onTreatCaught: onTreatCaught,
+      gameState: gameState,
     );
     world.add(catchZone);
   }
@@ -157,11 +158,20 @@ class PachinkoGameWorld extends Forge2DGame {
       position: position ?? Vector2(0, -boardHeight / 2 + 2), // Default to center-top
       radius: treatRadius,
       assets: pachinkoAssets,
-      onPegHit: onPegHit,
-      onCaught: onTreatCaught,
+      gameState: gameState,
     );
 
     world.add(currentTreat!);
+
+    // // Start miss detection timer (10 seconds)
+    // _treatMissTimer?.removeFromParent();
+    // _treatMissTimer = TimerComponent(
+    //   period: 10.0,
+    //   repeat: false,
+    //   onTick: () => _handleTreatMissed(),
+    //   removeOnFinish: true,
+    // );
+    // world.add(_treatMissTimer!);
   }
 
   /// Remove current treat from the game
@@ -170,12 +180,28 @@ class PachinkoGameWorld extends Forge2DGame {
       world.remove(currentTreat!);
       currentTreat = null;
     }
+
+    // // Cancel miss timer if active
+    // _treatMissTimer?.removeFromParent();
+    // _treatMissTimer = null;
   }
 
+  // /// Handle treat miss (timeout or settled)
+  // void _handleTreatMissed() {
+  //   if (currentTreat != null) {
+  //     gameState.treatMissed();
+  //     removeTreat();
+  //   }
+  // }
+
   /// Schedule treat removal after a short delay (for animation)
-  void scheduleTreatRemoval({Duration delay = const Duration(milliseconds: 500)}) {
-    Future.delayed(delay, () {
-      removeTreat();
-    });
-  }
+  // void scheduleTreatRemoval({Duration delay = const Duration(milliseconds: 500)}) {
+  //   final timer = TimerComponent(
+  //     period: delay.inMilliseconds / 1000.0,
+  //     repeat: false,
+  //     onTick: () => removeTreat(),
+  //     removeOnFinish: true,
+  //   );
+  //   world.add(timer);
+  // }
 }
