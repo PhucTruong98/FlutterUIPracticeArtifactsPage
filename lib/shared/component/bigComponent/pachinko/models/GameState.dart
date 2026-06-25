@@ -62,14 +62,20 @@ class GameState extends ChangeNotifier {
   }
 
   /// Treat caught by puppy - end round
-  void treatCaught() {
-    // Add energy based on score
-    puppyEnergy += currentScore;
+  void treatCaught({double multiplier = 1.0}) {
+    // Apply multiplier to score before adding to energy
+    final finalScore = (currentScore * multiplier).toInt();
+    puppyEnergy += finalScore;
     if (puppyEnergy > GameState.maxPuppyEnergy) {
       puppyEnergy = GameState.maxPuppyEnergy;
     }
 
-    statusMessage = 'Treat Collected! $currentScore Points';
+    // Show multiplier in status message if not 1.0
+    if (multiplier == 1.0) {
+      statusMessage = 'Treat Collected! $finalScore Points';
+    } else {
+      statusMessage = 'Treat Collected! $finalScore Points (x$multiplier)';
+    }
 
     // Reset round score and collision count
     currentScore = 0;

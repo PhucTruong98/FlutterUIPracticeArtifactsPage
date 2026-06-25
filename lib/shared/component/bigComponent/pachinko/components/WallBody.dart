@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 class WallBody extends BodyComponent {
   final Vector2 start;
   final Vector2 end;
-  final Color color;
+  final Color? color;
 
   WallBody({
     required this.start,
     required this.end,
-    this.color = const Color.fromARGB(255, 255, 0, 0), // Brown color
+    this.color, // Optional - if null, wall is invisible
   });
 
   @override
@@ -40,15 +40,18 @@ class WallBody extends BodyComponent {
 
   @override
   void render(Canvas canvas) {
-    // final paint = Paint()
-    //   ..color = color
-    //   ..style = PaintingStyle.stroke
-    //   ..strokeWidth = 0.3;
+    // Only render if color is provided
+    if (color == null) return;
 
-    // canvas.drawLine(
-    //   Offset(start.x, start.y),
-    //   Offset(end.x, end.y),
-    //   paint,
-    // );
+    final paint = Paint()
+      ..color = color!
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.3;
+
+    canvas.drawLine(
+      Offset(start.x, start.y),
+      Offset(end.x, end.y),
+      paint,
+    );
   }
 }

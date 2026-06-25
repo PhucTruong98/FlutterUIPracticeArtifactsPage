@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'components/TreatBody.dart';
 import 'components/PegBody.dart';
 import 'components/WallBody.dart';
-import 'components/PuppyCatchZone.dart';
+import 'components/SlotZone.dart';
 import 'PachinkoAssets.dart';
 import 'models/GameState.dart';
 
@@ -15,7 +15,7 @@ class PachinkoGameWorld extends Forge2DGame {
 
   TreatBody? currentTreat;
   List<PegBody> pegs = [];
-  late PuppyCatchZone catchZone;
+  List<SlotZone> slots = [];
   late PachinkoAssets pachinkoAssets;  // Asset manager instance
   TimerComponent? _treatMissTimer;  // Timer to detect missed treats
 
@@ -48,7 +48,7 @@ class PachinkoGameWorld extends Forge2DGame {
     _createBackground();  // Add background first so it renders behind everything
     _createWalls();
     _createPegs();
-    _createCatchZone();
+    _createSlots();
 
     camera.viewfinder.anchor = Anchor.center;
   }
@@ -76,7 +76,6 @@ class PachinkoGameWorld extends Forge2DGame {
     world.add(WallBody(
       start: Vector2(- boardWidth / 2, - boardHeight / 2), 
       end: Vector2(boardWidth / 2, - boardHeight / 2),
-      color: const Color.fromARGB(255, 255, 0, 0),
       
       ));
 
@@ -88,21 +87,18 @@ class PachinkoGameWorld extends Forge2DGame {
 
       end: Vector2(-boardWidth / 2, boardHeight / 2),
 
-      color: const Color.fromARGB(255, 255, 0, 0),
     ));
 
     // Right wall
     world.add(WallBody(
       start: Vector2(boardWidth / 2, -boardHeight / 2),
       end: Vector2(boardWidth / 2, boardHeight / 2),
-      color: const Color.fromARGB(255, 255, 0, 0),
     ));
 
     // Bottom wall (backstop)
     world.add(WallBody(
       start: Vector2(-boardWidth / 2, boardHeight / 2),
       end: Vector2(boardWidth / 2, boardHeight / 2),
-      color: const Color.fromARGB(255, 255, 0, 0),
     ));
   }
 
@@ -111,7 +107,7 @@ class PachinkoGameWorld extends Forge2DGame {
     const int rows = 4;
     const int maxCols = 4;
     const double startY = -7.0;
-    const double rowSpacing = boardHeight / (rows + 1 );
+    const double rowSpacing = boardHeight / (rows + 2 );
     const double pegSpacing = boardWidth / (maxCols );
 
     for (int row = 0; row < rows; row++) {
@@ -137,13 +133,47 @@ class PachinkoGameWorld extends Forge2DGame {
     }
   }
 
-  /// Create catch zone at bottom for puppy
-  void _createCatchZone() {
-    catchZone = PuppyCatchZone(
-      position: Vector2(0, boardHeight / 2 - 2),
-      size: Vector2(boardWidth - 2, 2),
-    );
-    world.add(catchZone);
+  /// Create 5 slot zones at bottom with multipliers
+  void _createSlots() {
+    const double slotWallWidth = 0.2;
+    const int slotsAmount = 5;
+
+    const double slotWidth = (boardWidth - slotWallWidth * (slotsAmount - 1)) / 5;  // (boardWidth - 2) / 5 = 18 / 5
+    const double slotHeight = 2.0;
+    const double slotY = boardHeight / 2 - 1;  // Position near bottom
+    const double startX = -boardWidth / 2 ;  // Left edge with margin
+    // Multipliers for each slot: outer(1.2), inner(1.5), center(1.7)
+    final multipliers = [1.2, 1.5, 1.7, 1.5, 1.2];
+
+    // Create 5 slot zones
+    for (int i = 0; i < 5; i++) {
+      final slotX = startX + (i * slotWidth) + i * slotWallWidth + slotWidth/2;
+
+      final slot = SlotZone(
+        position: Vector2(slotX, slotY),
+        size: Vector2(slotWidth, slotHeight),  // Slightly smaller to avoid wall overlap
+        multiplier: multipliers[i],
+        slotNumber: i + 1,
+      );
+
+      slots.add(slot);
+      world.add(slot);
+    }
+
+    // Create 4 divider walls between the 5 slots
+    const double wallHeight = 5;  // Walls extend above slot zones to guide treats
+    const double wallY = boardHeight / 2 - wallHeight / 2;
+
+    for (int i = 1; i < 5; i++) {
+
+      final wallX = startX + (i * slotWidth)+ i * slotWallWidth - slotWallWidth;
+
+      world.add(WallBody(
+        start: Vector2(wallX, wallY),
+        end: Vector2(wallX, boardHeight / 2),
+        color: const Color.fromARGB(255, 139, 69, 19),  // Brown color for dividers
+      ));
+    }
   }
 
   /// Spawn a treat at the specified position or default launch position
