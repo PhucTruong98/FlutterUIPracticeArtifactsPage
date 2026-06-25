@@ -40,15 +40,15 @@ class WallBody extends BodyComponent {
 
   @override
   void render(Canvas canvas) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.3;
+    // final paint = Paint()
+    //   ..color = color
+    //   ..style = PaintingStyle.stroke
+    //   ..strokeWidth = 0.3;
 
-    canvas.drawLine(
-      Offset(start.x, start.y),
-      Offset(end.x, end.y),
-      paint,
-    );
+    // canvas.drawLine(
+    //   Offset(start.x, start.y),
+    //   Offset(end.x, end.y),
+    //   paint,
+    // );
   }
 }

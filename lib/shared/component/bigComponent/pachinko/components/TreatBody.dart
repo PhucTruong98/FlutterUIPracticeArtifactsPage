@@ -52,7 +52,7 @@ class TreatBody extends BodyComponent with ContactCallbacks {
       shape,
       restitution: 0.1, // Bounciness
       friction: 0.3,
-      density: 2.0,
+      density: 10.0,
     );
 
     body.createFixture(fixtureDef);

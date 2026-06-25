@@ -21,9 +21,9 @@ class PachinkoGameWorld extends Forge2DGame {
 
   // Board dimensions (in physics units)
   static const double boardWidth = 20.0;
-  static const double boardHeight = 30.0;
+  static const double boardHeight = 25.0;
   static const double pegRadius = 0.6;
-  static const double treatRadius = 1.0;
+  static const double treatRadius = 0.8;
 
   PachinkoGameWorld({
     required this.gameState,
@@ -108,9 +108,9 @@ class PachinkoGameWorld extends Forge2DGame {
 
   /// Create classic Pachinko peg layout
   void _createPegs() {
-    const int rows = 5;
+    const int rows = 4;
     const int maxCols = 4;
-    const double startY = -10.0;
+    const double startY = -7.0;
     const double rowSpacing = boardHeight / (rows + 1 );
     const double pegSpacing = boardWidth / (maxCols );
 

@@ -82,14 +82,14 @@ class _PachinkoGameState extends State<PachinkoGame> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
-      appBar: AppBar(
-        title: const Text(
-          'Pachinko - Feed the Puppy',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFF34495E),
-        elevation: 0,
-      ),
+      // appBar: AppBar(
+      //   title: const Text(
+      //     'Pachinko - Feed the Puppy',
+      //     style: TextStyle(fontWeight: FontWeight.bold),
+      //   ),
+      //   backgroundColor: const Color(0xFF34495E),
+      //   elevation: 0,
+      // ),
       body: SafeArea(
         child: Column(
           children: [
@@ -118,21 +118,22 @@ class _PachinkoGameState extends State<PachinkoGame> {
             // Middle Section - Pachinko Board
             Expanded(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                // margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B7355).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFF6B4423),
-                    width: 4,
-                  ),
+                  // color: const Color(0xFF8B7355).withOpacity(0.3),
+                  // borderRadius: BorderRadius.circular(16),
+                  // border: Border.all(
+                  //   color: const Color(0xFF6B4423),
+                  //   width: 4,
+                  // ),
                 ),
                 child: Stack(
                   children: [
                     // Game board
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox.expand(
+                      // borderRadius: BorderRadius.circular(12),
+                      child: AspectRatio(
+                        aspectRatio: 4/5,
                         child: GameWidget(
                           game: gameWorld,
                         ),
