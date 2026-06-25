@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'TreatBody.dart';
 import '../PachinkoAssets.dart';
-import '../models/GameState.dart';
+import '../PachinkoGameWorld.dart';
 
 /// Enum representing all possible states for a peg
 enum PegState {
@@ -22,18 +22,17 @@ class PegBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
   final PachinkoAssets assets;  // Asset manager for sprites
-  final GameState gameState;
 
   // State management
   PegState _state = PegState.normal;
   TimerComponent? _stateTimer;
 
   late SpriteComponent _spriteComponent;
+  late PachinkoGameWorld _game;  // Cached game reference
 
   PegBody({
     required this.position,
     required this.assets,
-    required this.gameState,
     this.radius = 0.3,
   });
 
@@ -43,6 +42,9 @@ class PegBody extends BodyComponent with ContactCallbacks {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // Cache game reference once during load
+    _game = findGame() as PachinkoGameWorld;
 
     // Create sprite component for pixel art rendering
     // Sprite size should match physics body radius (radius * 2 for diameter)
@@ -94,8 +96,8 @@ class PegBody extends BodyComponent with ContactCallbacks {
   /// Mark peg as hit and start animation
   void onHit() {
     if (_state != PegState.hit) {
-      // Update game state
-      gameState.recordPegHit();
+      // Update game state via cached game reference
+      _game.gameState.recordPegHit();
 
       _setState(PegState.hit, duration: 0.3); // Return to normal after 0.3s
 

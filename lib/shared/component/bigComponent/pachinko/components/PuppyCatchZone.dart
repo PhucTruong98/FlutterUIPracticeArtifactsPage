@@ -2,19 +2,18 @@ import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'TreatBody.dart';
-import '../models/GameState.dart';
 import '../PachinkoGameWorld.dart';
 
 /// Sensor zone at bottom where puppy catches the treat
 class PuppyCatchZone extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final Vector2 size;
-  final GameState gameState;
+
+  late PachinkoGameWorld _game;  // Cached game reference
 
   PuppyCatchZone({
     required this.position,
     required this.size,
-    required this.gameState,
   });
 
   @override
@@ -41,29 +40,28 @@ class PuppyCatchZone extends BodyComponent with ContactCallbacks {
   }
 
   @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+
+    // Cache game reference once during load
+    _game = findGame() as PachinkoGameWorld;
+  }
+
+  @override
   void beginContact(Object other, Contact contact) {
     print('PuppyCatchZone collision with ${other.runtimeType}');
     if (other is TreatBody) {
-      // Update game state
-      gameState.treatCaught();
+      // Update game state via cached game reference
+      _game.gameState.treatCaught();
 
-      // Get the world to clear currentTreat and cancel miss timer
-      // We use a timer to delay removal slightly for visual feedback
-      final gameWorld = parent?.parent;
-      if (gameWorld != null) {
-        final timer = TimerComponent(
-          period: 0.5,
-          repeat: false,
-          onTick: () {
-            // Call the world's removeTreat to properly clean up
-            if (gameWorld is Forge2DWorld && gameWorld is PachinkoGameWorld) {
-              (gameWorld as PachinkoGameWorld).removeTreat();
-            }
-          },
-          removeOnFinish: true,
-        );
-        parent?.add(timer);
-      }
+      // Use a timer to delay removal slightly for visual feedback
+      final timer = TimerComponent(
+        period: 0.5,
+        repeat: false,
+        onTick: () => _game.removeTreat(),
+        removeOnFinish: true,
+      );
+      parent?.add(timer);
     }
   }
 

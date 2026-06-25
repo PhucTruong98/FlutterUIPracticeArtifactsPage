@@ -3,21 +3,18 @@ import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import '../PachinkoAssets.dart';
-import '../models/GameState.dart';
 
 /// Dynamic physics body for the falling treat (dog bone)
 class TreatBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
   final PachinkoAssets assets;  // Asset manager for sprites
-  final GameState gameState;
 
   late SpriteComponent _spriteComponent;
 
   TreatBody({
     required this.position,
     required this.assets,
-    required this.gameState,
     this.radius = 0.5,
   });
 

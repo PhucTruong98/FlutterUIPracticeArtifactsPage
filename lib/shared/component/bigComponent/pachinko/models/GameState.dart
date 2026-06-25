@@ -87,6 +87,11 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Trigger UI update (called when world state changes that aren't tracked in GameState)
+  void triggerUpdate() {
+    notifyListeners();
+  }
+
   /// Get energy percentage (0.0 to 1.0)
   double get energyPercentage => puppyEnergy / GameState.maxPuppyEnergy;
 

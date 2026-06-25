@@ -129,7 +129,6 @@ class PachinkoGameWorld extends Forge2DGame {
           position: Vector2(x, y),
           radius: pegRadius,
           assets: pachinkoAssets,
-          gameState: gameState,
         );
 
         pegs.add(peg);
@@ -143,7 +142,6 @@ class PachinkoGameWorld extends Forge2DGame {
     catchZone = PuppyCatchZone(
       position: Vector2(0, boardHeight / 2 - 2),
       size: Vector2(boardWidth - 2, 2),
-      gameState: gameState,
     );
     world.add(catchZone);
   }
@@ -158,7 +156,6 @@ class PachinkoGameWorld extends Forge2DGame {
       position: position ?? Vector2(0, -boardHeight / 2 + 2), // Default to center-top
       radius: treatRadius,
       assets: pachinkoAssets,
-      gameState: gameState,
     );
 
     world.add(currentTreat!);
@@ -179,6 +176,11 @@ class PachinkoGameWorld extends Forge2DGame {
     if (currentTreat != null) {
       world.remove(currentTreat!);
       currentTreat = null;
+
+      print("treat caught, gameState isTreatLoaded" + gameState.isTreatLoaded.toString());
+
+      // Trigger UI update so button can re-evaluate enabled state
+      gameState.triggerUpdate();
     }
 
     // // Cancel miss timer if active

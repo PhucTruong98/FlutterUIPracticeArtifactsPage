@@ -33,6 +33,15 @@ class _LoadTreatButtonState extends State<LoadTreatButton>
   }
 
   @override
+  void didUpdateWidget(LoadTreatButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If enabled state changed while button was being pressed, reset animation
+    if (oldWidget.enabled != widget.enabled && !widget.enabled) {
+      _scaleController.reverse();
+    }
+  }
+
+  @override
   void dispose() {
     _scaleController.dispose();
     super.dispose();
