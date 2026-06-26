@@ -154,6 +154,7 @@ class PachinkoGameWorld extends Forge2DGame {
         size: Vector2(slotWidth, slotHeight),  // Slightly smaller to avoid wall overlap
         multiplier: multipliers[i],
         slotNumber: i + 1,
+        assets: pachinkoAssets,
       );
 
       slots.add(slot);

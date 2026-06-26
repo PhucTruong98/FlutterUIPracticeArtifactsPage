@@ -21,6 +21,7 @@ class PachinkoAssets {
   static const String puppyNormalPath = '${_basePath}puppy_normal.png';
   static const String puppyHappyPath = '${_basePath}puppy_happy.png';
   static const String skyBackdropPath = '${_basePath}skyBackDrop.png';
+  static const String pipePath = '${_basePath}pipe.png';
 
   // Sprite metadata (srcSize values for pixel art)
   static final Vector2 pegSize = Vector2.all(8);
@@ -39,6 +40,7 @@ class PachinkoAssets {
       puppyNormalPath,
       puppyHappyPath,
       skyBackdropPath,
+      pipePath,
     ]);
   }
 
@@ -75,5 +77,10 @@ class PachinkoAssets {
   Sprite get skyBackdrop => Sprite(
         images.fromCache(skyBackdropPath),
         // No srcSize - use full image dimensions (772x1030)
+      );
+
+  Sprite get pipe => Sprite(
+        images.fromCache(pipePath),
+        // No srcSize - use full image dimensions (458x409)
       );
 }

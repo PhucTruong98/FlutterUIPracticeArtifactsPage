@@ -62,7 +62,8 @@ class TreatBody extends BodyComponent with ContactCallbacks {
 
   @override
   void beginContact(Object other, Contact contact) {
-    // Stage 3 will add gameState.recordPegHit() call here
-    // Note: PuppyCatchZone handles the treat caught logic
+    // Contact logic handled by other components:
+    // - PegBody: Handles peg collisions and scoring
+    // - SlotZone: Handles treat catching with multipliers
   }
 }

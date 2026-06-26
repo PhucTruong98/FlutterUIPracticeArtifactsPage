@@ -3,6 +3,7 @@ import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'TreatBody.dart';
 import '../PachinkoGameWorld.dart';
+import '../PachinkoAssets.dart';
 
 /// Sensor zone for individual slot with score multiplier
 class SlotZone extends BodyComponent with ContactCallbacks {
@@ -10,6 +11,7 @@ class SlotZone extends BodyComponent with ContactCallbacks {
   final Vector2 size;
   final double multiplier;
   final int slotNumber;
+  final PachinkoAssets assets;
 
   late PachinkoGameWorld _game;  // Cached game reference
   late TextPainter _textPainter;  // Cached to avoid recreation every frame
@@ -20,7 +22,8 @@ class SlotZone extends BodyComponent with ContactCallbacks {
     required this.size,
     required this.multiplier,
     required this.slotNumber,
-  });
+    required this.assets,
+  }) : super(priority: 10);  // Render on top of treats (default priority 0)
 
   @override
   Body createBody() {
@@ -79,6 +82,17 @@ class SlotZone extends BodyComponent with ContactCallbacks {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
+
+    // Add pipe sprite component
+    // Move pipe up by wall height (5 units) to align with slot walls
+    final pipeSprite = SpriteComponent(
+      sprite: assets.pipe,
+      size: size,  // Scale pipe to match slot size
+      // position: Vector2(0, -2.5),  // Move up by half wall height (5/2)
+      anchor: Anchor.center,
+      paint: Paint()..filterQuality = FilterQuality.none,
+    );
+    add(pipeSprite);
   }
 
   @override
@@ -89,7 +103,7 @@ class SlotZone extends BodyComponent with ContactCallbacks {
 
       // Use a timer to delay removal slightly for visual feedback
       final timer = TimerComponent(
-        period: 0.5,
+        period: 0.0,
         repeat: false,
         onTick: () => _game.removeTreat(),
         removeOnFinish: true,
