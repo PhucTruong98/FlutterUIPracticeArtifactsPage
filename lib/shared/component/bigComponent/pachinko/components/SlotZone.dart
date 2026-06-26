@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'TreatBody.dart';
+import 'WallBody.dart';
 import '../PachinkoGameWorld.dart';
 import '../PachinkoAssets.dart';
 
@@ -12,6 +13,8 @@ class SlotZone extends BodyComponent with ContactCallbacks {
   final double multiplier;
   final int slotNumber;
   final PachinkoAssets assets;
+  final bool createLeftWall;
+  final double wallHeight;
 
   late PachinkoGameWorld _game;  // Cached game reference
   late TextPainter _textPainter;  // Cached to avoid recreation every frame
@@ -23,6 +26,8 @@ class SlotZone extends BodyComponent with ContactCallbacks {
     required this.multiplier,
     required this.slotNumber,
     required this.assets,
+    this.createLeftWall = false, 
+    required this.wallHeight,  // Most slots don't create left wall by default
   }) : super(priority: 10);  // Render on top of treats (default priority 0)
 
   @override
@@ -51,6 +56,7 @@ class SlotZone extends BodyComponent with ContactCallbacks {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
 
     // Cache game reference once during load
     _game = findGame() as PachinkoGameWorld;
@@ -87,12 +93,27 @@ class SlotZone extends BodyComponent with ContactCallbacks {
     // Move pipe up by wall height (5 units) to align with slot walls
     final pipeSprite = SpriteComponent(
       sprite: assets.pipe,
-      size: size,  // Scale pipe to match slot size
-      // position: Vector2(0, -2.5),  // Move up by half wall height (5/2)
+      size: Vector2(size.x, wallHeight),  // Scale pipe to match slot size
+      position: Vector2(0, size.y/2 - wallHeight/2),  // Move up by half wall height (5/2)
       anchor: Anchor.center,
       paint: Paint()..filterQuality = FilterQuality.none,
     );
     add(pipeSprite);
+
+    // Create left divider wall if requested
+    if (createLeftWall && parent != null) {
+      final double wallX = position.x - (size.x / 2);  // Left edge of slot
+      final double wallYTop = position.y + size.y/2 - wallHeight;
+      final double wallYBottom = position.y + (size.y / 2);
+
+      final leftWall = WallBody(
+        start: Vector2(wallX, wallYTop),
+        end: Vector2(wallX, wallYBottom),
+        color: const Color.fromARGB(255, 139, 69, 19),  // Brown divider
+      );
+
+      parent?.add(leftWall);
+    }
   }
 
   @override

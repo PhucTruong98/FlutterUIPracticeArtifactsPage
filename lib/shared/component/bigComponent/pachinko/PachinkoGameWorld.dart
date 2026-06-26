@@ -136,11 +136,12 @@ class PachinkoGameWorld extends Forge2DGame {
   /// Create 5 slot zones at bottom with multipliers
   void _createSlots() {
     const double slotWallWidth = 0.2;
+    const double slotWallHeight = 3.0;
     const int slotsAmount = 5;
 
     const double slotWidth = (boardWidth - slotWallWidth * (slotsAmount - 1)) / 5;  // (boardWidth - 2) / 5 = 18 / 5
-    const double slotHeight = 2.0;
-    const double slotY = boardHeight / 2 - 1;  // Position near bottom
+    const double slotHeight = 0.7;
+    const double slotY = boardHeight / 2 - slotHeight/ 2;  // Position near bottom
     const double startX = -boardWidth / 2 ;  // Left edge with margin
     // Multipliers for each slot: outer(1.2), inner(1.5), center(1.7)
     final multipliers = [1.2, 1.5, 1.7, 1.5, 1.2];
@@ -155,26 +156,14 @@ class PachinkoGameWorld extends Forge2DGame {
         multiplier: multipliers[i],
         slotNumber: i + 1,
         assets: pachinkoAssets,
+        createLeftWall: i > 0, 
+        wallHeight: slotWallHeight,  // Slots 2-5 create left wall dividers
       );
 
       slots.add(slot);
       world.add(slot);
     }
-
-    // Create 4 divider walls between the 5 slots
-    const double wallHeight = 5;  // Walls extend above slot zones to guide treats
-    const double wallY = boardHeight / 2 - wallHeight / 2;
-
-    for (int i = 1; i < 5; i++) {
-
-      final wallX = startX + (i * slotWidth)+ i * slotWallWidth - slotWallWidth;
-
-      world.add(WallBody(
-        start: Vector2(wallX, wallY),
-        end: Vector2(wallX, boardHeight / 2),
-        color: const Color.fromARGB(255, 139, 69, 19),  // Brown color for dividers
-      ));
-    }
+    // Wall creation now handled by individual SlotZones
   }
 
   /// Spawn a treat at the specified position or default launch position
