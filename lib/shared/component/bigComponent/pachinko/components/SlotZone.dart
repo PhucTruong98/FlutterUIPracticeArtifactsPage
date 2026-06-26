@@ -12,6 +12,8 @@ class SlotZone extends BodyComponent with ContactCallbacks {
   final int slotNumber;
 
   late PachinkoGameWorld _game;  // Cached game reference
+  late TextPainter _textPainter;  // Cached to avoid recreation every frame
+  late Paint _fillPaint;  // Cached paint object
 
   SlotZone({
     required this.position,
@@ -49,11 +51,38 @@ class SlotZone extends BodyComponent with ContactCallbacks {
 
     // Cache game reference once during load
     _game = findGame() as PachinkoGameWorld;
+
+    // Calculate slot color once based on multiplier
+    Color slotColor;
+    if (multiplier >= 1.7) {
+      slotColor = Colors.amber.withValues(alpha: 0.2);  // Gold for x1.7
+    } else if (multiplier >= 1.5) {
+      slotColor = Colors.orange.withValues(alpha: 0.15);  // Orange for x1.5
+    } else {
+      slotColor = Colors.green.withValues(alpha: 0.1);  // Green for x1.2
+    }
+
+    // Initialize paint object once
+    _fillPaint = Paint()
+      ..color = slotColor
+      ..style = PaintingStyle.fill;
+
+    // Initialize TextPainter once
+    _textPainter = TextPainter(
+      text: TextSpan(
+        text: 'x$multiplier',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 0.8,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
   }
 
   @override
   void beginContact(Object other, Contact contact) {
-    print('SlotZone $slotNumber (x$multiplier) collision with ${other.runtimeType}');
     if (other is TreatBody) {
       // Update game state with multiplier via cached game reference
       _game.gameState.treatCaught(multiplier: multiplier);
@@ -71,45 +100,26 @@ class SlotZone extends BodyComponent with ContactCallbacks {
 
   @override
   void render(Canvas canvas) {
-    // Draw slot zone with color based on multiplier
-    Color slotColor;
-    if (multiplier >= 1.7) {
-      slotColor = Colors.amber.withValues(alpha: 0.2);  // Gold for x1.7
-    } else if (multiplier >= 1.5) {
-      slotColor = Colors.orange.withValues(alpha: 0.15);  // Orange for x1.5
-    } else {
-      slotColor = Colors.green.withValues(alpha: 0.1);  // Green for x1.2
-    }
-
-    final paint = Paint()
-      ..color = slotColor
-      ..style = PaintingStyle.fill;
-
+    // Draw slot zone using cached paint (no object creation!)
     canvas.drawRect(
       Rect.fromCenter(
         center: Offset.zero,
         width: size.x,
         height: size.y,
       ),
-      paint,
+      _fillPaint,
     );
 
-    // Draw multiplier text
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: 'x$multiplier',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 0.8,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
+    // Draw multiplier text using cached TextPainter (no recreation!)
+    _textPainter.paint(
       canvas,
-      Offset(-textPainter.width / 2, -textPainter.height / 2),
+      Offset(-_textPainter.width / 2, -_textPainter.height / 2),
     );
+  }
+
+  @override
+  void onRemove() {
+    _textPainter.dispose();
+    super.onRemove();
   }
 }

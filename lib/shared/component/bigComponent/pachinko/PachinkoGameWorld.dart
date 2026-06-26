@@ -207,8 +207,6 @@ class PachinkoGameWorld extends Forge2DGame {
       world.remove(currentTreat!);
       currentTreat = null;
 
-      print("treat caught, gameState isTreatLoaded" + gameState.isTreatLoaded.toString());
-
       // Trigger UI update so button can re-evaluate enabled state
       gameState.triggerUpdate();
     }

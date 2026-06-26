@@ -75,7 +75,7 @@ class PegBody extends BodyComponent with ContactCallbacks {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 1.3, // High bounciness for pegs
+      restitution: 1.2, // High bounciness for pegs
       friction: 0.1,
     );
 

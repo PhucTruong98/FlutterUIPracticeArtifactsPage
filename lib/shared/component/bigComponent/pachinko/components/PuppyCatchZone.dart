@@ -10,6 +10,7 @@ class PuppyCatchZone extends BodyComponent with ContactCallbacks {
   final Vector2 size;
 
   late PachinkoGameWorld _game;  // Cached game reference
+  late Paint _fillPaint;  // Cached paint object
 
   PuppyCatchZone({
     required this.position,
@@ -45,11 +46,15 @@ class PuppyCatchZone extends BodyComponent with ContactCallbacks {
 
     // Cache game reference once during load
     _game = findGame() as PachinkoGameWorld;
+
+    // Initialize paint object once
+    _fillPaint = Paint()
+      ..color = Colors.green.withValues(alpha: 0.15)
+      ..style = PaintingStyle.fill;
   }
 
   @override
   void beginContact(Object other, Contact contact) {
-    print('PuppyCatchZone collision with ${other.runtimeType}');
     if (other is TreatBody) {
       // Update game state via cached game reference
       _game.gameState.treatCaught();
@@ -67,18 +72,14 @@ class PuppyCatchZone extends BodyComponent with ContactCallbacks {
 
   @override
   void render(Canvas canvas) {
-    // Draw semi-transparent catch zone
-    final paint = Paint()
-      ..color = Colors.green.withOpacity(0.15)
-      ..style = PaintingStyle.fill;
-
+    // Draw semi-transparent catch zone using cached paint (no object creation!)
     canvas.drawRect(
       Rect.fromCenter(
         center: Offset.zero,
         width: size.x,
         height: size.y,
       ),
-      paint,
+      _fillPaint,
     );
   }
 }
