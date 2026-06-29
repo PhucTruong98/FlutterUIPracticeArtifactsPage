@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/pixel_art_theme.dart';
 
 /// Widget to display current score and collision count
 class ScoreDisplayWidget extends StatelessWidget {
@@ -14,30 +15,22 @@ class ScoreDisplayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF9B59B6).withOpacity(0.9),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: PixelArtTheme.pixelContainer(
+        color: PixelArtTheme.secondary,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildScoreItem('Score', score.toString()),
-          const SizedBox(width: 12),
+          _buildScoreItem('SCORE', score.toString()),
+          const SizedBox(width: 8),
           Container(
-            width: 1.5,
-            height: 24,
-            color: Colors.white.withOpacity(0.5),
+            width: 2,
+            height: 20,
+            color: PixelArtTheme.border,
           ),
-          const SizedBox(width: 12),
-          _buildScoreItem('Hits', collisionCount.toString()),
+          const SizedBox(width: 8),
+          _buildScoreItem('HITS', collisionCount.toString()),
         ],
       ),
     );
@@ -49,19 +42,17 @@ class ScoreDisplayWidget extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
+          style: PixelArtTheme.pixelText(
+            fontSize: 6,
+            color: PixelArtTheme.textSecondary,
           ),
         ),
-        const SizedBox(height: 1),
+        const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
+          style: PixelArtTheme.pixelText(
+            fontSize: 10,
             color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
           ),
         ),
       ],

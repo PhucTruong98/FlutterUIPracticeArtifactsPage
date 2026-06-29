@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/pixel_art_theme.dart';
 
 /// Animated energy gauge widget for puppy
 class EnergyGaugeWidget extends StatefulWidget {
@@ -68,26 +69,17 @@ class _EnergyGaugeWidgetState extends State<EnergyGaugeWidget>
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFB84D).withOpacity(0.9),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+      decoration: PixelArtTheme.pixelContainer(
+        color: PixelArtTheme.accent,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Energy',
-            style: TextStyle(
+          Text(
+            'ENERGY',
+            style: PixelArtTheme.pixelText(
+              fontSize: 8,
               color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
@@ -100,39 +92,26 @@ class _EnergyGaugeWidgetState extends State<EnergyGaugeWidget>
                 children: [
                   Container(
                     height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8.5),
-                      child: Stack(
-                        children: [
-                          FractionallySizedBox(
-                            widthFactor: fillPercentage,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color(0xFF4CAF50),
-                                    const Color(0xFF8BC34A),
-                                  ],
-                                ),
-                              ),
+                    decoration: PixelArtTheme.pixelProgressBarContainer(),
+                    child: Stack(
+                      children: [
+                        FractionallySizedBox(
+                          widthFactor: fillPercentage,
+                          child: Container(
+                            decoration: PixelArtTheme.pixelProgressBarFill(
+                              color: PixelArtTheme.energyFill,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${widget.targetEnergy.toInt()}/${widget.maxEnergy.toInt()} (${(fillPercentage * 100).toInt()}%)',
-                    style: const TextStyle(
+                    style: PixelArtTheme.pixelText(
+                      fontSize: 6,
                       color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],

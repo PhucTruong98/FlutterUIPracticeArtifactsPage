@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/pixel_art_theme.dart';
 
 /// Button to load a treat onto the Pachinko board
 class LoadTreatButton extends StatefulWidget {
@@ -19,6 +20,7 @@ class _LoadTreatButtonState extends State<LoadTreatButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
 
   @override
   void initState() {
@@ -49,18 +51,21 @@ class _LoadTreatButtonState extends State<LoadTreatButton>
 
   void _handleTapDown(TapDownDetails details) {
     if (widget.enabled) {
+      setState(() => _isPressed = true);
       _scaleController.forward();
     }
   }
 
   void _handleTapUp(TapUpDetails details) {
     if (widget.enabled) {
+      setState(() => _isPressed = false);
       _scaleController.reverse();
       widget.onPressed();
     }
   }
 
   void _handleTapCancel() {
+    setState(() => _isPressed = false);
     _scaleController.reverse();
   }
 
@@ -76,47 +81,29 @@ class _LoadTreatButtonState extends State<LoadTreatButton>
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: widget.enabled
-                      ? [
-                          const Color(0xFFFF6B35),
-                          const Color(0xFFFF8C42),
-                        ]
-                      : [
-                          Colors.grey.shade400,
-                          Colors.grey.shade500,
-                        ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: widget.enabled
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFFFF6B35).withOpacity(0.5),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : [],
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: widget.enabled
+                  ? PixelArtTheme.pixelButton(
+                      color: PixelArtTheme.primary,
+                      isPressed: _isPressed,
+                    )
+                  : PixelArtTheme.pixelContainer(
+                      color: PixelArtTheme.disabled,
+                    ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.add_circle_outline,
                     color: Colors.white,
-                    size: 18,
+                    size: 14,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Text(
-                    'Load Treat',
-                    style: TextStyle(
+                    'LOAD',
+                    style: PixelArtTheme.pixelText(
+                      fontSize: 8,
                       color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],

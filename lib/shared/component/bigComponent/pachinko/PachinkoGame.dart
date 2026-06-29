@@ -8,6 +8,7 @@ import 'widgets/EnergyGaugeWidget.dart';
 import 'widgets/ScoreDisplayWidget.dart';
 import 'widgets/LoadTreatButton.dart';
 import 'painters/puppy_painter.dart';
+import 'theme/pixel_art_theme.dart';
 
 /// Main Pachinko game screen
 class PachinkoGame extends StatefulWidget {
@@ -196,23 +197,14 @@ class _PachinkoGameState extends State<PachinkoGame> {
                                             horizontal: 24,
                                             vertical: 12,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.9),
-                                            borderRadius: BorderRadius.circular(20),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.3),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
+                                          decoration: PixelArtTheme.pixelContainer(
+                                            color: Colors.white,
                                           ),
-                                          child: const Text(
-                                            '← Drag to aim → Tap to Drop',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF2C3E50),
+                                          child: Text(
+                                            'DRAG TO AIM - TAP TO DROP',
+                                            style: PixelArtTheme.pixelText(
+                                              fontSize: 8,
+                                              color: PixelArtTheme.background,
                                             ),
                                           ),
                                         ),
@@ -242,26 +234,17 @@ class _PachinkoGameState extends State<PachinkoGame> {
                           child: Center(
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
+                                horizontal: 16,
+                                vertical: 8,
                               ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF27AE60).withValues(alpha: 0.95),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                              decoration: PixelArtTheme.pixelContainer(
+                                color: PixelArtTheme.success,
                               ),
                               child: Text(
-                                gameState.statusMessage!,
-                                style: const TextStyle(
+                                gameState.statusMessage!.toUpperCase(),
+                                style: PixelArtTheme.pixelText(
+                                  fontSize: 8,
                                   color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -293,9 +276,9 @@ class _PachinkoGameState extends State<PachinkoGame> {
                               return Container(
                                 width: 60,
                                 height: 60,
-                                decoration: BoxDecoration(
+                                decoration: PixelArtTheme.pixelContainer(
                                   color: Colors.white.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(30),
+                                  borderWidth: 2,
                                 ),
                                 child: CustomPaint(
                                   painter: PuppyPainter(
@@ -331,39 +314,40 @@ class _PachinkoGameState extends State<PachinkoGame> {
                           padding: const EdgeInsets.only(top: 16),
                           child: Column(
                             children: [
-                              const Text(
-                                'Game Over!',
-                                style: TextStyle(
+                              Text(
+                                'GAME OVER!',
+                                style: PixelArtTheme.pixelText(
+                                  fontSize: 12,
                                   color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Puppy Energy: ${gameState.puppyEnergy.toInt()}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 16,
+                                'PUPPY ENERGY: ${gameState.puppyEnergy.toInt()}',
+                                style: PixelArtTheme.pixelText(
+                                  fontSize: 8,
+                                  color: PixelArtTheme.textSecondary,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              ElevatedButton(
-                                onPressed: () {
+                              const SizedBox(height: 12),
+                              GestureDetector(
+                                onTap: () {
                                   gameState.reset();
                                 },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF27AE60),
+                                child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                    vertical: 12,
+                                    horizontal: 24,
+                                    vertical: 10,
                                   ),
-                                ),
-                                child: const Text(
-                                  'Play Again',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                  decoration: PixelArtTheme.pixelButton(
+                                    color: PixelArtTheme.success,
+                                  ),
+                                  child: Text(
+                                    'PLAY AGAIN',
+                                    style: PixelArtTheme.pixelText(
+                                      fontSize: 8,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
