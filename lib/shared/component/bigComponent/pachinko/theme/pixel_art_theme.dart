@@ -112,6 +112,44 @@ class PixelArtTheme {
     );
   }
 
+  /// Top sky placeholder background
+  ///
+  /// Stepped gradient mimicking pixel art sky
+  /// TODO: Replace with DecorationImage using topSkyBackdrop.png when available
+  static BoxDecoration topSkyPlaceholder() {
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF87CEEB), // Sky blue (lighter at top)
+          Color(0xFF7EC0EE), // Medium sky blue
+          Color(0xFF63B8FF), // Deeper sky blue (darker at bottom)
+        ],
+        stops: [0.0, 0.5, 1.0], // Banded effect for pixel art look
+      ),
+    );
+  }
+
+  /// Ground/grass placeholder background
+  ///
+  /// Stepped gradient mimicking pixel art ground with grass
+  /// TODO: Replace with DecorationImage using groundBackdrop.png when available
+  static BoxDecoration groundPlaceholder() {
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF228B22), // Forest green (grass at top)
+          Color(0xFF6B4423), // Brown (dirt middle)
+          Color(0xFF4A3728), // Dark brown (deep soil at bottom)
+        ],
+        stops: [0.0, 0.4, 1.0], // Banded effect showing soil layers
+      ),
+    );
+  }
+
   /// Disabled/inactive color
   ///
   /// For disabled buttons and inactive elements

@@ -1,4 +1,5 @@
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
@@ -40,8 +41,8 @@ class PachinkoGameWorld extends Forge2DGame {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Initialize assets with game's image cache and preload all images
-    pachinkoAssets = PachinkoAssets(images);
+    // Initialize assets with global image cache and preload all images
+    pachinkoAssets = PachinkoAssets(Flame.images);
     await pachinkoAssets.loadAll();
 
     // Initialize the board (zoom is set in constructor)

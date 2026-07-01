@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'models/GameState.dart';
 import 'PachinkoGameWorld.dart';
+import 'PuppyGameWorld.dart';
 import 'widgets/TreatInventoryWidget.dart';
 import 'widgets/EnergyGaugeWidget.dart';
 import 'widgets/ScoreDisplayWidget.dart';
@@ -21,6 +22,7 @@ class PachinkoGame extends StatefulWidget {
 class _PachinkoGameState extends State<PachinkoGame> {
   late GameState gameState;
   late PachinkoGameWorld gameWorld;
+  late PuppyGameWorld puppyGameWorld;
   late ValueNotifier<bool> isPuppyHappyNotifier;
   late ValueNotifier<double> treatPreviewXNotifier; // Horizontal position for treat drop preview
 
@@ -29,6 +31,9 @@ class _PachinkoGameState extends State<PachinkoGame> {
     super.initState();
     gameState = GameState();
     gameWorld = PachinkoGameWorld(
+      gameState: gameState,
+    );
+    puppyGameWorld = PuppyGameWorld(
       gameState: gameState,
     );
     isPuppyHappyNotifier = ValueNotifier<bool>(false);
@@ -82,7 +87,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2C3E50),
+      backgroundColor: Colors.black, // Neutral background, won't bleed between sections
       // appBar: AppBar(
       //   title: const Text(
       //     'Pachinko - Feed the Puppy',
@@ -100,6 +105,12 @@ class _PachinkoGameState extends State<PachinkoGame> {
               builder: (context, child) {
                 return Container(
                   padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/pachinko/cloudTop.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -257,101 +268,101 @@ class _PachinkoGameState extends State<PachinkoGame> {
               ),
             ),
 
-            // Bottom Section - Puppy and Energy (reactive to gameState)
+            // Bottom Section - Puppy Animation World + UI Overlay
             ListenableBuilder(
               listenable: gameState,
               builder: (context, child) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  height: 150, // Fixed height for bottom section
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/pachinko/grassGroundBottom.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Stack(
                     children: [
-                      // Compact row with Puppy and Energy
-                      Row(
-                        children: [
-                          // Smaller Puppy (reactive to happiness notifier)
-                          ValueListenableBuilder(
-                            valueListenable: isPuppyHappyNotifier,
-                            builder: (context, isHappy, child) {
-                              return Container(
-                                width: 60,
-                                height: 60,
-                                decoration: PixelArtTheme.pixelContainer(
-                                  color: Colors.white.withValues(alpha: 0.1),
-                                  borderWidth: 2,
-                                ),
-                                child: CustomPaint(
-                                  painter: PuppyPainter(
-                                    isHappy: isHappy,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 12),
+                      // Layer 1: Puppy Game World (Flame animations)
+                      Positioned.fill(
+                        child: GameWidget(game: puppyGameWorld),
+                      ),
 
-                          // Energy Gauge (expanded to fill remaining space)
-                          Expanded(
-                            child: EnergyGaugeWidget(
+                      // Layer 2: UI Overlay (Flutter widgets on top)
+                      Positioned(
+                        right: 16,
+                        top: 8,
+                        bottom: 8,
+                        left: 180, // Leave space for puppy on left
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Energy Gauge
+                            EnergyGaugeWidget(
                               currentEnergy: gameState.puppyEnergy,
                               maxEnergy: GameState.maxPuppyEnergy,
                               targetEnergy: gameState.puppyEnergy,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
+                            const SizedBox(height: 8),
 
-                      // Load Treat Button
-                      LoadTreatButton(
-                        onPressed: _loadTreat,
-                        enabled: gameState.canLoadTreat && gameWorld.currentTreat == null,
+                            // Load Treat Button
+                            LoadTreatButton(
+                              onPressed: _loadTreat,
+                              enabled: gameState.canLoadTreat && gameWorld.currentTreat == null,
+                            ),
+                          ],
+                        ),
                       ),
 
                       // Game Over Message
                       if (gameState.isGameOver && gameWorld.currentTreat == null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Column(
-                            children: [
-                              Text(
-                                'GAME OVER!',
-                                style: PixelArtTheme.pixelText(
-                                  fontSize: 12,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'PUPPY ENERGY: ${gameState.puppyEnergy.toInt()}',
-                                style: PixelArtTheme.pixelText(
-                                  fontSize: 8,
-                                  color: PixelArtTheme.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              GestureDetector(
-                                onTap: () {
-                                  gameState.reset();
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 10,
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 16,
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'GAME OVER!',
+                                  style: PixelArtTheme.pixelText(
+                                    fontSize: 12,
+                                    color: Colors.white,
                                   ),
-                                  decoration: PixelArtTheme.pixelButton(
-                                    color: PixelArtTheme.success,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'PUPPY ENERGY: ${gameState.puppyEnergy.toInt()}',
+                                  style: PixelArtTheme.pixelText(
+                                    fontSize: 8,
+                                    color: PixelArtTheme.textSecondary,
                                   ),
-                                  child: Text(
-                                    'PLAY AGAIN',
-                                    style: PixelArtTheme.pixelText(
-                                      fontSize: 8,
-                                      color: Colors.white,
+                                ),
+                                const SizedBox(height: 12),
+                                GestureDetector(
+                                  onTap: () {
+                                    gameState.reset();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 10,
+                                    ),
+                                    decoration: PixelArtTheme.pixelButton(
+                                      color: PixelArtTheme.success,
+                                    ),
+                                    child: Text(
+                                      'PLAY AGAIN',
+                                      style: PixelArtTheme.pixelText(
+                                        fontSize: 8,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                     ],
