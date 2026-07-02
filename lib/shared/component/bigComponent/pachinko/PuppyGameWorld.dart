@@ -29,12 +29,18 @@ class PuppyGameWorld extends FlameGame {
 
     // Create puppy component
     puppyComponent = PuppyComponent(
-      position: Vector2(80, size.y / 2), // Left side, vertically centered
-      size: Vector2.all(80), // 80x80 for better visibility
+      // position: Vector2(size.x / 2, size.y / 2), // Left side, vertically centered
+
+      position: Vector2(0,0), // Left side, vertically centered
+
+      size: Vector2.all(120), // 120x120 to match sprite sheet frame size
       assets: pachinkoAssets,
     );
 
-    await add(puppyComponent);
+    await world.add(puppyComponent);
+
+    // Apply 2x zoom to camera
+    camera.viewfinder.zoom = 2.0;
 
     // Listen to game state changes
     gameState.addListener(_onGameStateChanged);

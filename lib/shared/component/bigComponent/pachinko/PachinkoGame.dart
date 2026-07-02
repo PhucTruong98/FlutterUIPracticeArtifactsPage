@@ -6,6 +6,7 @@ import 'PachinkoGameWorld.dart';
 import 'PuppyGameWorld.dart';
 import 'widgets/TreatInventoryWidget.dart';
 import 'widgets/EnergyGaugeWidget.dart';
+import 'widgets/HorizontalEnergyBar.dart';
 import 'widgets/ScoreDisplayWidget.dart';
 import 'widgets/LoadTreatButton.dart';
 import 'painters/puppy_painter.dart';
@@ -268,6 +269,19 @@ class _PachinkoGameState extends State<PachinkoGame> {
               ),
             ),
 
+            // Energy Bar Section - Full width between board and puppy world
+            ListenableBuilder(
+              listenable: gameState,
+              builder: (context, child) {
+                return HorizontalEnergyBar(
+                  currentLevel: gameState.currentLevel,
+                  currentEnergy: gameState.puppyEnergy,
+                  maxEnergy: GameState.maxPuppyEnergy,
+                  targetEnergy: gameState.puppyEnergy,
+                );
+              },
+            ),
+
             // Bottom Section - Puppy Animation World + UI Overlay
             ListenableBuilder(
               listenable: gameState,
@@ -297,14 +311,6 @@ class _PachinkoGameState extends State<PachinkoGame> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Energy Gauge
-                            EnergyGaugeWidget(
-                              currentEnergy: gameState.puppyEnergy,
-                              maxEnergy: GameState.maxPuppyEnergy,
-                              targetEnergy: gameState.puppyEnergy,
-                            ),
-                            const SizedBox(height: 8),
-
                             // Load Treat Button
                             LoadTreatButton(
                               onPressed: _loadTreat,

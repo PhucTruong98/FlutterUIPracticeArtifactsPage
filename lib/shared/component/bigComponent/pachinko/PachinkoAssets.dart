@@ -24,6 +24,9 @@ class PachinkoAssets {
   static const String pipePath = '${_basePath}pipe.png';
   static const String cloudTopPath = '${_basePath}cloudTop.jpg';
   static const String grassGroundBottomPath = '${_basePath}grassGroundBottom.jpg';
+  static const String dogIdlePath = '${_basePath}dogIdle.png';
+  static const String dogEatingPath = '${_basePath}dogEating.png';
+  static const String dogHappyPath = '${_basePath}dogHappy.png';
 
   // Sprite metadata (srcSize values for pixel art)
   static final Vector2 pegSize = Vector2.all(8);
@@ -45,6 +48,9 @@ class PachinkoAssets {
       pipePath,
       cloudTopPath,
       grassGroundBottomPath,
+      dogIdlePath,
+      dogEatingPath,
+      dogHappyPath,
     ]);
   }
 
@@ -96,5 +102,36 @@ class PachinkoAssets {
   Sprite get grassGroundBottom => Sprite(
         images.fromCache(grassGroundBottomPath),
         // No srcSize - use full image dimensions
+      );
+
+  /// Dog sprite sheet animations
+  SpriteAnimation get dogIdleAnimation => SpriteAnimation.fromFrameData(
+        images.fromCache(dogIdlePath),
+        SpriteAnimationData.sequenced(
+          amount: 9,
+          stepTime: 0.15,
+          textureSize: Vector2.all(120),
+          loop: true,
+        ),
+      );
+
+  SpriteAnimation get dogEatingAnimation => SpriteAnimation.fromFrameData(
+        images.fromCache(dogEatingPath),
+        SpriteAnimationData.sequenced(
+          amount: 9,
+          stepTime: 0.1,
+          textureSize: Vector2.all(120),
+          loop: false,
+        ),
+      );
+
+  SpriteAnimation get dogHappyAnimation => SpriteAnimation.fromFrameData(
+        images.fromCache(dogHappyPath),
+        SpriteAnimationData.sequenced(
+          amount: 13,
+          stepTime: 0.08,
+          textureSize: Vector2.all(120),
+          loop: false,
+        ),
       );
 }

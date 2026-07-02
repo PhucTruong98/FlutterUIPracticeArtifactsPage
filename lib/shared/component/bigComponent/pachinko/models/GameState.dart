@@ -101,6 +101,9 @@ class GameState extends ChangeNotifier {
   /// Get energy percentage (0.0 to 1.0)
   double get energyPercentage => puppyEnergy / GameState.maxPuppyEnergy;
 
+  /// Get current level based on energy (every 500 energy = 1 level)
+  int get currentLevel => (puppyEnergy / 500).floor() + 1;
+
   /// Check if can load treat (note: caller should also check world.currentTreat == null)
   bool get canLoadTreat => remainingTreats > 0 && !isTreatLoaded;
 
