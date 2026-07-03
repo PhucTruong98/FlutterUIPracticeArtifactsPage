@@ -278,6 +278,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                   currentEnergy: gameState.puppyEnergy,
                   maxEnergy: GameState.maxPuppyEnergy,
                   targetEnergy: gameState.puppyEnergy,
+                  levelUpOccurred: gameState.levelUpOccurred,
                 );
               },
             ),

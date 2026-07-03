@@ -8,7 +8,9 @@ class GameState extends ChangeNotifier {
   int currentScore;
   int collisionCount;
   double puppyEnergy;
+  int currentLevel;
   bool isTreatLoaded;
+  bool levelUpOccurred;
   String? statusMessage;
 
   GameState({
@@ -16,7 +18,9 @@ class GameState extends ChangeNotifier {
     this.currentScore = 0,
     this.collisionCount = 0,
     this.puppyEnergy = 0,
+    this.currentLevel = 1,
     this.isTreatLoaded = false,
+    this.levelUpOccurred = false,
     this.statusMessage,
   });
 
@@ -26,7 +30,9 @@ class GameState extends ChangeNotifier {
     currentScore = 0;
     collisionCount = 0;
     puppyEnergy = 0;
+    currentLevel = 1;
     isTreatLoaded = false;
+    levelUpOccurred = false;
     statusMessage = null;
     notifyListeners();
   }
@@ -66,12 +72,21 @@ class GameState extends ChangeNotifier {
     // Apply multiplier to score before adding to energy
     final finalScore = (currentScore * multiplier).toInt();
     puppyEnergy += finalScore;
-    if (puppyEnergy > GameState.maxPuppyEnergy) {
-      puppyEnergy = GameState.maxPuppyEnergy;
+
+    // Reset level-up flag at start
+    levelUpOccurred = false;
+
+    // Check for level-up(s) and handle excess energy
+    while (puppyEnergy >= GameState.maxPuppyEnergy) {
+      currentLevel++;
+      puppyEnergy -= GameState.maxPuppyEnergy; // Carry over excess
+      levelUpOccurred = true; // Set flag for UI animation
     }
 
-    // Show multiplier in status message if not 1.0
-    if (multiplier == 1.0) {
+    // Show appropriate status message
+    if (levelUpOccurred) {
+      statusMessage = 'LEVEL UP to $currentLevel! +$finalScore Points';
+    } else if (multiplier == 1.0) {
       statusMessage = 'Treat Collected! $finalScore Points';
     } else {
       statusMessage = 'Treat Collected! $finalScore Points (x$multiplier)';
@@ -100,9 +115,6 @@ class GameState extends ChangeNotifier {
 
   /// Get energy percentage (0.0 to 1.0)
   double get energyPercentage => puppyEnergy / GameState.maxPuppyEnergy;
-
-  /// Get current level based on energy (every 500 energy = 1 level)
-  int get currentLevel => (puppyEnergy / 500).floor() + 1;
 
   /// Check if can load treat (note: caller should also check world.currentTreat == null)
   bool get canLoadTreat => remainingTreats > 0 && !isTreatLoaded;
