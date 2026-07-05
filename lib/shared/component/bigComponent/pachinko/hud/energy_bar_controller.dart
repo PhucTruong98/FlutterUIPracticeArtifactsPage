@@ -34,33 +34,16 @@ class EnergyBarController extends HudElementController {
     await _animateFill(_lastPercent, current / maxEnergy, gen);
   }
 
-  /// Level-up: fill to full, flash cycles, reset, fill to the overflow amount.
-  Future<void> levelUp({
-    required int newLevel,
-    required double overflow,
-    required double newMax,
-  }) async {
-    final gen = beginSequence();
-
-    if (!await _animateFill(_lastPercent, 1.0, gen)) return;
-    if (!await _flashCycles(PachinkoConfig.levelFlashCycles, gen)) return;
-
-    // Commit the new level at the moment of the flash.
-    level = newLevel;
-    maxEnergy = newMax;
-    displayEnergy = overflow;
-    notifyListeners();
-
-    _lastPercent = 0.0;
-    await _animateFill(0.0, overflow / newMax, gen);
-  }
+ 
 
   // ---- Internals ----
 
   Future<bool> _animateFill(double from, double to, int gen) async {
     fill.reset();
-    fillAnimation = Tween<double>(begin: from, end: to)
-        .animate(CurvedAnimation(parent: fill, curve: Curves.easeInOut));
+    fillAnimation = Tween<double>(
+      begin: from,
+      end: to,
+    ).animate(CurvedAnimation(parent: fill, curve: Curves.easeInOut));
     await fill.forward();
     if (!isCurrent(gen)) return false; // a newer event superseded us
     _lastPercent = to;
@@ -79,6 +62,34 @@ class EnergyBarController extends HudElementController {
     }
     flash.value = 0.0;
     return true;
+  }
+
+  Future<void> onTreatCaught(int newScore) async {
+    final gen = beginSequence();
+    var newTotalEnergy = displayEnergy + newScore;
+
+    while (newTotalEnergy >= maxEnergy) {
+      //first pump
+      if (!await _animateFill(displayEnergy / maxEnergy, 1.0, gen)) return;
+      if (!await _flashCycles(PachinkoConfig.levelFlashCycles, gen)) return;
+      //update text
+      level++;
+      displayEnergy = 0.0;
+      notifyListeners();
+
+      newTotalEnergy -= maxEnergy;
+    }
+    //animate left over energy
+    // Animate leftover energy (if any)
+    if (newTotalEnergy > 0 || displayEnergy > 0) {
+      if (!await _animateFill(0.0, newTotalEnergy / maxEnergy, gen)) return;
+    }
+
+    // // Final state update
+    // if (!isCurrent(gen)) return;
+
+    displayEnergy = newTotalEnergy;
+    notifyListeners();
   }
 
   @override

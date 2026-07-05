@@ -28,21 +28,23 @@ class HudController {
     required double currentEnergy,
   }) async {
     // Calculate new energy
-    final newTotalEnergy = energy.displayEnergy + finalScore;
+    // final newTotalEnergy = energy.displayEnergy + finalScore;
 
-    // Check if level-up occurred
-    if (newTotalEnergy >= energy.maxEnergy) {
-      // Level up!
-      final overflow = newTotalEnergy - energy.maxEnergy;
-      await energy.levelUp(
-        newLevel: energy.level + 1,
-        overflow: overflow,
-        newMax: energy.maxEnergy, // Keep same max for now
-      );
-    } else {
-      // Normal energy gain
-      await energy.setEnergy(newTotalEnergy);
-    }
+    // // Check if level-up occurred
+    // if (newTotalEnergy >= energy.maxEnergy) {
+    //   // Level up!
+    //   final overflow = newTotalEnergy - energy.maxEnergy;
+    //   await energy.levelUp(
+    //     newLevel: energy.level + 1,
+    //     overflow: overflow,
+    //     newMax: energy.maxEnergy, // Keep same max for now
+    //   );
+    // } else {
+    //   // Normal energy gain
+    //   await energy.setEnergy(newTotalEnergy);
+    // }
+
+    await energy.onTreatCaught(finalScore);
 
     // Reset round score
     score.resetRound();

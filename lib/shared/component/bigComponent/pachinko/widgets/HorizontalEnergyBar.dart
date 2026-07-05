@@ -18,6 +18,9 @@ class HorizontalEnergyBar extends StatelessWidget {
         final fillPercent = controller.fillAnimation.value;
         final flashValue = controller.flash.value; // 0..1
 
+        final displayedEnergy =
+    (fillPercent * controller.maxEnergy).round();
+
         return Container(
           height: 24,
           color: PixelArtTheme.background,
@@ -65,9 +68,11 @@ class HorizontalEnergyBar extends StatelessWidget {
                         ),
                       ),
                       // Energy text centered in bar
+
+                      
                       Center(
                         child: Text(
-                          '${controller.displayEnergy.toInt()}/${controller.maxEnergy.toInt()}',
+                          '${displayedEnergy.toInt()}/${controller.maxEnergy.toInt()}',
                           style: PixelArtTheme.pixelText(
                             fontSize: 6,
                             color: Colors.white,
