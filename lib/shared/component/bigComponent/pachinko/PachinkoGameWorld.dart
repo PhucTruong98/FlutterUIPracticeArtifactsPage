@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
@@ -9,6 +10,7 @@ import 'components/WallBody.dart';
 import 'components/SlotZone.dart';
 import 'PachinkoAssets.dart';
 import 'models/GameState.dart';
+import 'config/PachinkoConfig.dart';
 
 /// Main Forge2D game world for Pachinko physics simulation
 class PachinkoGameWorld extends Forge2DGame {
@@ -20,19 +22,19 @@ class PachinkoGameWorld extends Forge2DGame {
   late PachinkoAssets pachinkoAssets;  // Asset manager instance
   TimerComponent? _treatMissTimer;  // Timer to detect missed treats
 
-  // Board dimensions (in physics units)
-  static const double boardWidth = 20.0;
-  static const double boardHeight = 25.0;
-  static const double pegRadius = 0.6;
-  static const double treatRadius = 0.8;
+  // Board dimensions (in physics units) - now from config
+  static double get boardWidth => PachinkoConfig.boardWidth;
+  static double get boardHeight => PachinkoConfig.boardHeight;
+  static double get pegRadius => PachinkoConfig.pegRadius;
+  static double get treatRadius => PachinkoConfig.treatRadius;
 
   PachinkoGameWorld({
     required this.gameState,
   }) : super(
-          gravity: Vector2(0, 25), // Downward gravity
+          gravity: Vector2(0, PachinkoConfig.gravity), // Downward gravity
           camera: CameraComponent.withFixedResolution(
-            width: boardWidth,
-            height: boardHeight,
+            width: PachinkoConfig.boardWidth,
+            height: PachinkoConfig.boardHeight,
           ),
           zoom: 1
         );
@@ -105,11 +107,11 @@ class PachinkoGameWorld extends Forge2DGame {
 
   /// Create classic Pachinko peg layout
   void _createPegs() {
-    const int rows = 4;
-    const int maxCols = 4;
-    const double startY = -7.0;
-    const double rowSpacing = boardHeight / (rows + 2 );
-    const double pegSpacing = boardWidth / (maxCols );
+    final int rows = PachinkoConfig.pegRows;
+    final int maxCols = PachinkoConfig.pegMaxCols;
+    final double startY = PachinkoConfig.pegStartY;
+    final double rowSpacing = PachinkoConfig.rowSpacing;
+    final double pegSpacing = PachinkoConfig.pegSpacing;
 
     for (int row = 0; row < rows; row++) {
       final y = startY + (row * rowSpacing);
@@ -124,7 +126,7 @@ class PachinkoGameWorld extends Forge2DGame {
 
         final peg = PegBody(
           position: Vector2(x, y),
-          radius: pegRadius,
+          radius: PachinkoConfig.pegRadius,
           assets: pachinkoAssets,
         );
 
@@ -136,19 +138,19 @@ class PachinkoGameWorld extends Forge2DGame {
 
   /// Create 5 slot zones at bottom with multipliers
   void _createSlots() {
-    const double slotWallWidth = 0.2;
-    const double slotWallHeight = 3.0;
-    const int slotsAmount = 5;
+    final double slotWallWidth = PachinkoConfig.slotWallWidth;
+    final double slotWallHeight = PachinkoConfig.slotWallHeight;
+    final int slotsAmount = PachinkoConfig.slotCount;
 
-    const double slotWidth = (boardWidth - slotWallWidth * (slotsAmount - 1)) / 5;  // (boardWidth - 2) / 5 = 18 / 5
-    const double slotHeight = 0.7;
-    const double slotY = boardHeight / 2 - slotHeight/ 2;  // Position near bottom
-    const double startX = -boardWidth / 2 ;  // Left edge with margin
+    final double slotWidth = PachinkoConfig.slotWidth;
+    final double slotHeight = PachinkoConfig.slotHeight;
+    final double slotY = PachinkoConfig.slotY;
+    final double startX = -PachinkoConfig.boardWidth / 2;  // Left edge with margin
     // Multipliers for each slot: outer(1.2), inner(1.5), center(1.7)
-    final multipliers = [1.2, 1.5, 1.7, 1.5, 1.2];
+    final multipliers = PachinkoConfig.slotMultipliers;
 
-    // Create 5 slot zones
-    for (int i = 0; i < 5; i++) {
+    // Create slot zones
+    for (int i = 0; i < slotsAmount; i++) {
       final slotX = startX + (i * slotWidth) + i * slotWallWidth + slotWidth/2;
 
       final slot = SlotZone(
@@ -174,8 +176,8 @@ class PachinkoGameWorld extends Forge2DGame {
     }
 
     currentTreat = TreatBody(
-      position: position ?? Vector2(0, -boardHeight / 2 + 2), // Default to center-top
-      radius: treatRadius,
+      position: position ?? Vector2(0, -PachinkoConfig.boardHeight / 2 + 2), // Default to center-top
+      radius: PachinkoConfig.treatRadius,
       assets: pachinkoAssets,
     );
 

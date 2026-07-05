@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-import 'package:flame/components.dart';
 import 'models/GameState.dart';
 import 'PachinkoGameWorld.dart';
 import 'PuppyGameWorld.dart';
+import 'hud/hud_controller.dart';
 import 'widgets/TreatInventoryWidget.dart';
-import 'widgets/EnergyGaugeWidget.dart';
 import 'widgets/HorizontalEnergyBar.dart';
 import 'widgets/ScoreDisplayWidget.dart';
 import 'widgets/LoadTreatButton.dart';
-import 'painters/puppy_painter.dart';
 import 'theme/pixel_art_theme.dart';
+import 'config/PachinkoConfig.dart';
 
 /// Main Pachinko game screen
 class PachinkoGame extends StatefulWidget {
@@ -24,44 +23,32 @@ class _PachinkoGameState extends State<PachinkoGame> {
   late GameState gameState;
   late PachinkoGameWorld gameWorld;
   late PuppyGameWorld puppyGameWorld;
-  late ValueNotifier<bool> isPuppyHappyNotifier;
+  late HudController hudController;
   late ValueNotifier<double> treatPreviewXNotifier; // Horizontal position for treat drop preview
 
   @override
   void initState() {
     super.initState();
     gameState = GameState();
+    hudController = HudController(maxEnergy: PachinkoConfig.maxPuppyEnergy);
+
+    // Link GameState and HudController
+    gameState.setHudController(hudController);
+
     gameWorld = PachinkoGameWorld(
       gameState: gameState,
     );
     puppyGameWorld = PuppyGameWorld(
       gameState: gameState,
     );
-    isPuppyHappyNotifier = ValueNotifier<bool>(false);
     treatPreviewXNotifier = ValueNotifier<double>(0.0);
-
-    // Listen to treatCaught to trigger puppy happiness animation
-    gameState.addListener(_onGameStateChanged);
   }
 
   @override
   void dispose() {
-    gameState.removeListener(_onGameStateChanged);
-    isPuppyHappyNotifier.dispose();
+    hudController.dispose();
     treatPreviewXNotifier.dispose();
     super.dispose();
-  }
-
-  void _onGameStateChanged() {
-    // Trigger puppy happiness when treat is caught (based on status message)
-    if (gameState.statusMessage?.contains('Collected') == true) {
-      isPuppyHappyNotifier.value = true;
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          isPuppyHappyNotifier.value = false;
-        }
-      });
-    }
   }
 
 
@@ -119,8 +106,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                         remainingTreats: gameState.remainingTreats,
                       ),
                       ScoreDisplayWidget(
-                        score: gameState.currentScore,
-                        collisionCount: gameState.collisionCount,
+                        controller: hudController.score,
                       ),
                     ],
                   ),
@@ -270,18 +256,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
             ),
 
             // Energy Bar Section - Full width between board and puppy world
-            ListenableBuilder(
-              listenable: gameState,
-              builder: (context, child) {
-                return HorizontalEnergyBar(
-                  currentLevel: gameState.currentLevel,
-                  currentEnergy: gameState.puppyEnergy,
-                  maxEnergy: GameState.maxPuppyEnergy,
-                  targetEnergy: gameState.puppyEnergy,
-                  levelUpOccurred: gameState.levelUpOccurred,
-                );
-              },
-            ),
+            HorizontalEnergyBar(controller: hudController.energy),
 
             // Bottom Section - Puppy Animation World + UI Overlay
             ListenableBuilder(
@@ -340,7 +315,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'PUPPY ENERGY: ${gameState.puppyEnergy.toInt()}',
+                                  'PUPPY ENERGY: ${hudController.energy.displayEnergy.toInt()}',
                                   style: PixelArtTheme.pixelText(
                                     fontSize: 8,
                                     color: PixelArtTheme.textSecondary,

@@ -1,38 +1,42 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../hud/hud_controller.dart';
+import '../config/PachinkoConfig.dart';
 
 /// Game state model for Pachinko game
+/// Now focused on game mechanics only - HUD state lives in HudController
 class GameState extends ChangeNotifier {
-  static const double maxPuppyEnergy = 2000.0;
 
   int remainingTreats;
-  int currentScore;
-  int collisionCount;
-  double puppyEnergy;
-  int currentLevel;
   bool isTreatLoaded;
-  bool levelUpOccurred;
   String? statusMessage;
 
+  // Temporary round state (for calculating final score)
+  int currentRoundScore;
+  int currentRoundCollisions;
+
+  // HUD controller reference (set after construction to avoid circular dependency)
+  HudController? hudController;
+
   GameState({
-    this.remainingTreats = 5,
-    this.currentScore = 0,
-    this.collisionCount = 0,
-    this.puppyEnergy = 0,
-    this.currentLevel = 1,
+    int? remainingTreats,
     this.isTreatLoaded = false,
-    this.levelUpOccurred = false,
     this.statusMessage,
-  });
+    this.currentRoundScore = 0,
+    this.currentRoundCollisions = 0,
+  }) : remainingTreats = remainingTreats ?? PachinkoConfig.initialTreats;
+
+  /// Set HUD controller reference (called after construction)
+  void setHudController(HudController controller) {
+    hudController = controller;
+  }
 
   /// Reset game to initial state
   void reset() {
-    remainingTreats = 5;
-    currentScore = 0;
-    collisionCount = 0;
-    puppyEnergy = 0;
-    currentLevel = 1;
+    remainingTreats = PachinkoConfig.initialTreats;
+    currentRoundScore = 0;
+    currentRoundCollisions = 0;
     isTreatLoaded = false;
-    levelUpOccurred = false;
     statusMessage = null;
     notifyListeners();
   }
@@ -60,51 +64,52 @@ class GameState extends ChangeNotifier {
     return false;
   }
 
-  /// Record a peg collision
+  /// Record a peg collision (temporary round state)
   void recordPegHit() {
-    collisionCount++;
-    currentScore += 50;
+    currentRoundCollisions++;
+    currentRoundScore += PachinkoConfig.pegHitPoints;
     notifyListeners();
+
+    // Trigger HUD animation (fire-and-forget)
+    unawaited(hudController?.onPegHit(PachinkoConfig.pegHitPoints));
   }
 
-  /// Treat caught by puppy - end round
-  void treatCaught({double multiplier = 1.0}) {
-    // Apply multiplier to score before adding to energy
-    final finalScore = (currentScore * multiplier).toInt();
-    puppyEnergy += finalScore;
+  /// Treat caught by puppy - returns the final score for HUD update
+  int treatCaught({double multiplier = 1.0}) {
+    // Apply multiplier to score
+    final finalScore = (currentRoundScore * multiplier).toInt();
 
-    // Reset level-up flag at start
-    levelUpOccurred = false;
-
-    // Check for level-up(s) and handle excess energy
-    while (puppyEnergy >= GameState.maxPuppyEnergy) {
-      currentLevel++;
-      puppyEnergy -= GameState.maxPuppyEnergy; // Carry over excess
-      levelUpOccurred = true; // Set flag for UI animation
-    }
-
-    // Show appropriate status message
-    if (levelUpOccurred) {
-      statusMessage = 'LEVEL UP to $currentLevel! +$finalScore Points';
-    } else if (multiplier == 1.0) {
+    // Show status message
+    if (multiplier == 1.0) {
       statusMessage = 'Treat Collected! $finalScore Points';
     } else {
       statusMessage = 'Treat Collected! $finalScore Points (x$multiplier)';
     }
 
-    // Reset round score and collision count
-    currentScore = 0;
-    collisionCount = 0;
+    // Trigger HUD animation (fire-and-forget)
+    if (hudController != null) {
+      unawaited(hudController!.onTreatCaught(
+        finalScore: finalScore,
+        currentEnergy: hudController!.energy.displayEnergy,
+      ));
+    }
+
+    // Reset round state
+    final score = finalScore;
+    currentRoundScore = 0;
+    currentRoundCollisions = 0;
     notifyListeners();
+
+    return score;
   }
 
   /// Treat missed (timed out or settled without being caught)
   void treatMissed() {
     statusMessage = 'Missed!';
 
-    // Reset round score and collision count
-    currentScore = 0;
-    collisionCount = 0;
+    // Reset round state
+    currentRoundScore = 0;
+    currentRoundCollisions = 0;
     notifyListeners();
   }
 
@@ -112,9 +117,6 @@ class GameState extends ChangeNotifier {
   void triggerUpdate() {
     notifyListeners();
   }
-
-  /// Get energy percentage (0.0 to 1.0)
-  double get energyPercentage => puppyEnergy / GameState.maxPuppyEnergy;
 
   /// Check if can load treat (note: caller should also check world.currentTreat == null)
   bool get canLoadTreat => remainingTreats > 0 && !isTreatLoaded;

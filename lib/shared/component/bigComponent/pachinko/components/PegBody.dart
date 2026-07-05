@@ -6,6 +6,7 @@ import 'package:flutter/painting.dart';
 import 'TreatBody.dart';
 import '../PachinkoAssets.dart';
 import '../PachinkoGameWorld.dart';
+import '../config/PachinkoConfig.dart';
 
 /// Enum representing all possible states for a peg
 enum PegState {
@@ -33,8 +34,8 @@ class PegBody extends BodyComponent with ContactCallbacks {
   PegBody({
     required this.position,
     required this.assets,
-    this.radius = 0.3,
-  });
+    double? radius,
+  }) : radius = radius ?? PachinkoConfig.pegRadius;
 
   /// Public getter for current state
   PegState get state => _state;
@@ -75,8 +76,8 @@ class PegBody extends BodyComponent with ContactCallbacks {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 1.2, // High bounciness for pegs
-      friction: 0.1,
+      restitution: PachinkoConfig.pegRestitution, // High bounciness for pegs
+      friction: PachinkoConfig.pegFriction,
     );
 
     body.createFixture(fixtureDef);
@@ -99,14 +100,14 @@ class PegBody extends BodyComponent with ContactCallbacks {
       // Update game state via cached game reference
       _game.gameState.recordPegHit();
 
-      _setState(PegState.hit, duration: 0.3); // Return to normal after 0.3s
+      _setState(PegState.hit, duration: PachinkoConfig.pegHitDuration.inMilliseconds / 1000.0);
 
       // Add elastic bounce scale animation
       _spriteComponent.add(
         ScaleEffect.by(
-          Vector2.all(1.15), // Scale up by 15%
+          Vector2.all(PachinkoConfig.pegScaleEffect), // Scale up effect
           EffectController(
-            duration: 0.3,
+            duration: PachinkoConfig.pegHitDuration.inMilliseconds / 1000.0,
             curve: Curves.elasticOut, // Springy overshoot effect
             alternate: true, // Return to normal size
           ),

@@ -3,6 +3,7 @@ import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import '../PachinkoAssets.dart';
+import '../config/PachinkoConfig.dart';
 
 /// Dynamic physics body for the falling treat (dog bone)
 class TreatBody extends BodyComponent with ContactCallbacks {
@@ -15,8 +16,8 @@ class TreatBody extends BodyComponent with ContactCallbacks {
   TreatBody({
     required this.position,
     required this.assets,
-    this.radius = 0.5,
-  });
+    double? radius,
+  }) : radius = radius ?? PachinkoConfig.treatRadius;
 
   @override
   Future<void> onLoad() async {
@@ -50,9 +51,9 @@ class TreatBody extends BodyComponent with ContactCallbacks {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 0.1, // Bounciness
-      friction: 0.3,
-      density: 10.0,
+      restitution: PachinkoConfig.treatRestitution, // Bounciness
+      friction: PachinkoConfig.treatFriction,
+      density: PachinkoConfig.treatDensity,
     );
 
     body.createFixture(fixtureDef);

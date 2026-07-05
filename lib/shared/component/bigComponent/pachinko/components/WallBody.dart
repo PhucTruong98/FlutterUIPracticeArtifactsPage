@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
+import '../config/PachinkoConfig.dart';
 
 /// Static wall boundaries for the Pachinko board
 class WallBody extends BodyComponent {
@@ -29,8 +30,8 @@ class WallBody extends BodyComponent {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 0.5,
-      friction: 0.3,
+      restitution: PachinkoConfig.wallRestitution,
+      friction: PachinkoConfig.wallFriction,
     );
 
     body.createFixture(fixtureDef);
