@@ -27,6 +27,7 @@ class PachinkoAssets {
   static const String dogIdlePath = '${_basePath}dogIdle.png';
   static const String dogEatingPath = '${_basePath}dogEating.png';
   static const String dogHappyPath = '${_basePath}dogHappy.png';
+  static const String dogLevelUpPath = '${_basePath}dogLevelUp.png';
 
   // Sprite metadata (srcSize values for pixel art)
   static final Vector2 pegSize = Vector2.all(8);
@@ -51,6 +52,7 @@ class PachinkoAssets {
       dogIdlePath,
       dogEatingPath,
       dogHappyPath,
+      dogLevelUpPath
     ]);
   }
 
@@ -127,6 +129,16 @@ class PachinkoAssets {
 
   SpriteAnimation get dogHappyAnimation => SpriteAnimation.fromFrameData(
         images.fromCache(dogHappyPath),
+        SpriteAnimationData.sequenced(
+          amount: 13,
+          stepTime: 0.08,
+          textureSize: Vector2.all(120),
+          loop: false,
+        ),
+      );
+
+    SpriteAnimation get dogLevelUpAnimation => SpriteAnimation.fromFrameData(
+        images.fromCache(dogLevelUpPath),
         SpriteAnimationData.sequenced(
           amount: 13,
           stepTime: 0.08,

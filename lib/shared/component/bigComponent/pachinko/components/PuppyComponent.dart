@@ -8,6 +8,9 @@ enum PuppyState {
   idle,    // Looping idle animation
   eating,  // One-shot eating animation
   happy,   // One-shot happy celebration
+  levelUp,   // One-shot levelUp celebration
+
+
 }
 
 /// Animated puppy component that reacts to treats
@@ -23,6 +26,8 @@ class PuppyComponent extends SpriteAnimationComponent {
   late SpriteAnimation _idleAnimation;
   late SpriteAnimation _eatingAnimation;
   late SpriteAnimation _happyAnimation;
+  late SpriteAnimation _levelUpAnimation;
+
 
   PuppyComponent({
     required super.position,
@@ -44,6 +49,8 @@ class PuppyComponent extends SpriteAnimationComponent {
     _idleAnimation = assets.dogIdleAnimation;
     _eatingAnimation = assets.dogEatingAnimation;
     _happyAnimation = assets.dogHappyAnimation;
+    _levelUpAnimation = assets.dogLevelUpAnimation;
+
 
     // Set initial animation to idle
     animation = _idleAnimation;
@@ -88,6 +95,17 @@ class PuppyComponent extends SpriteAnimationComponent {
       );
       add(_stateTransitionTimer!);
     }
+
+    // else if (_state == PuppyState.levelUp) {
+    //   // After happy animation finishes, return to idle
+    //   _stateTransitionTimer = TimerComponent(
+    //     period: 1.04, // 13 frames × 0.08s
+    //     repeat: false,
+    //     onTick: () => _setState(PuppyState.idle),
+    //     removeOnFinish: true,
+    //   );
+    //   add(_stateTransitionTimer!);
+    // }
   }
 
   /// Get animation for given state
@@ -99,6 +117,8 @@ class PuppyComponent extends SpriteAnimationComponent {
         return _eatingAnimation;
       case PuppyState.happy:
         return _happyAnimation;
+      case PuppyState.levelUp:
+        return _levelUpAnimation;
     }
   }
 
