@@ -9,7 +9,7 @@ class PachinkoConfig {
   // ========================================
 
   /// Maximum energy capacity for puppy
-  static const double maxPuppyEnergy = 300.0;
+  static const double maxPuppyEnergy = 900.0;
 
   /// Starting number of treats in player's inventory
   static const int initialTreats = 5;

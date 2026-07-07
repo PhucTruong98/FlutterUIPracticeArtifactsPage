@@ -90,7 +90,6 @@ class GameState extends ChangeNotifier {
     if (hudController != null) {
       unawaited(hudController!.onTreatCaught(
         finalScore: finalScore,
-        currentEnergy: hudController!.energy.displayEnergy,
       ));
     }
 

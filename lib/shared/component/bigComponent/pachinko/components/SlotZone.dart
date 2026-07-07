@@ -109,7 +109,7 @@ class SlotZone extends BodyComponent with ContactCallbacks {
       final leftWall = WallBody(
         start: Vector2(wallX, wallYTop),
         end: Vector2(wallX, wallYBottom),
-        color: const Color.fromARGB(255, 139, 69, 19),  // Brown divider
+        // color: const Color.fromARGB(255, 139, 69, 19),  // Brown divider
       );
 
       parent?.add(leftWall);

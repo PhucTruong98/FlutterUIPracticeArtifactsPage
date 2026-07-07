@@ -282,7 +282,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                         right: 16,
                         top: 8,
                         bottom: 8,
-                        left: 180, // Leave space for puppy on left
+                        left: 250, // Leave space for puppy on left
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,

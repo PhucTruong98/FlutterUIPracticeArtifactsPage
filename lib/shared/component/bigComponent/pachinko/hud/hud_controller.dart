@@ -25,7 +25,6 @@ class HudController {
   /// Check for level-up and route to appropriate energy method.
   Future<void> onTreatCaught({
     required int finalScore,
-    required double currentEnergy,
   }) async {
     // Calculate new energy
     // final newTotalEnergy = energy.displayEnergy + finalScore;
