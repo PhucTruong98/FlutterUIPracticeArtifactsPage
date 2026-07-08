@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
@@ -119,8 +120,11 @@ class SlotZone extends BodyComponent with ContactCallbacks {
   @override
   void beginContact(Object other, Contact contact) {
     if (other is TreatBody) {
-      // Update game state with multiplier via cached game reference
-      _game.gameState.treatCaught(multiplier: multiplier);
+      // Update game logic
+      // _game.game.treatCaught(multiplier: multiplier);
+
+      // Trigger coordinator callback (async, fire-and-forget)
+      unawaited(_game.onTreatCaughtCallback(multiplier));
 
       // Use a timer to delay removal slightly for visual feedback
       final timer = TimerComponent(

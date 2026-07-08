@@ -9,12 +9,14 @@ import 'components/PegBody.dart';
 import 'components/WallBody.dart';
 import 'components/SlotZone.dart';
 import 'PachinkoAssets.dart';
-import 'models/GameState.dart';
+import 'models/GameLogic.dart';
 import 'config/PachinkoConfig.dart';
 
 /// Main Forge2D game world for Pachinko physics simulation
 class PachinkoGameWorld extends Forge2DGame {
-  final GameState gameState;
+  final GameLogic game;
+  final void Function() onPegHitCallback;
+  final Future<void> Function(double) onTreatCaughtCallback;
 
   TreatBody? currentTreat;
   List<PegBody> pegs = [];
@@ -29,7 +31,9 @@ class PachinkoGameWorld extends Forge2DGame {
   static double get treatRadius => PachinkoConfig.treatRadius;
 
   PachinkoGameWorld({
-    required this.gameState,
+    required this.game,
+    required this.onPegHitCallback,
+    required this.onTreatCaughtCallback,
   }) : super(
           gravity: Vector2(0, PachinkoConfig.gravity), // Downward gravity
           camera: CameraComponent.withFixedResolution(
@@ -200,8 +204,7 @@ class PachinkoGameWorld extends Forge2DGame {
       world.remove(currentTreat!);
       currentTreat = null;
 
-      // Trigger UI update so button can re-evaluate enabled state
-      gameState.triggerUpdate();
+      // UI updates now handled by PachinkoGame coordinator via setState()
     }
 
     // // Cancel miss timer if active

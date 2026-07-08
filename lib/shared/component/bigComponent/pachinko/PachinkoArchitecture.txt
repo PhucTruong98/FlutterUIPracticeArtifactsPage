@@ -1,0 +1,927 @@
+================================================================================
+PACHINKO GAME - REFACTORED ARCHITECTURE
+================================================================================
+
+VERSION: Post-Refactor (2026-07-07)
+STATUS: Implemented and Verified
+
+================================================================================
+OVERVIEW
+================================================================================
+
+The Pachinko game uses a COORDINATOR PATTERN where PachinkoGame acts as the
+central orchestrator for all game events and animations. This architecture
+replaces the previous ChangeNotifier-based approach with explicit callbacks
+for better control and synchronization.
+
+KEY DESIGN PRINCIPLES:
+1. Single Responsibility - Each component has one clear purpose
+2. Separation of Concerns - Game logic separated from UI/presentation
+3. Explicit Event Flow - Callbacks instead of implicit notifications
+4. Animation Coordination - Central control prevents conflicts
+5. Predictable State - No hidden state changes
+
+================================================================================
+ARCHITECTURE DIAGRAM
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        PachinkoGame (StatefulWidget)                     │
+│                     *** CENTRAL COORDINATOR ***                          │
+│                                                                          │
+│  Responsibilities:                                                       │
+│  - Owns GameLogic instance (pure game state)                            │
+│  - Owns HudController, PachinkoGameWorld, PuppyGameWorld                │
+│  - Receives callbacks from game components                              │
+│  - Orchestrates animation sequences                                     │
+│  - Blocks user input during animations (_isAnimating flag)              │
+│  - Calls setState() to trigger UI rebuilds                              │
+│                                                                          │
+│  ┌────────────────────────────────────────────────────────────────┐    │
+│  │ GameLogic (Pure Dart Class - NO ChangeNotifier)               │    │
+│  │ --------------------------------------------------------       │    │
+│  │ Fields:                                                        │    │
+│  │  - remainingTreats: int                                        │    │
+│  │  - isTreatLoaded: bool                                         │    │
+│  │  - statusMessage: String?                                      │    │
+│  │  - currentRoundScore: int                                      │    │
+│  │  - currentRoundCollisions: int                                 │    │
+│  │                                                                 │    │
+│  │ Methods:                                                        │    │
+│  │  - recordPegHit() -> void                                      │    │
+│  │  - treatCaught(multiplier) -> int (returns finalScore)         │    │
+│  │  - loadTreat() -> bool                                         │    │
+│  │  - dropTreat() -> bool                                         │    │
+│  │  - reset() -> void                                             │    │
+│  │                                                                 │    │
+│  │ NO UI DEPENDENCIES - Pure game logic only                      │    │
+│  └────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  Coordinator Methods:                                                   │
+│  ┌──────────────────────────────────────────────────────────────┐      │
+│  │ onPegHit()                                                    │      │
+│  │  - Updates game logic                                         │      │
+│  │  - Triggers HUD animation (fire-and-forget)                   │      │
+│  │  - Calls setState()                                           │      │
+│  └──────────────────────────────────────────────────────────────┘      │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────┐      │
+│  │ onTreatCaught(multiplier) async                              │      │
+│  │  - Sets _isAnimating = true (blocks user input)              │      │
+│  │  - Updates game logic                                         │      │
+│  │  - Calls _playTreatCaughtSequence(finalScore)                │      │
+│  │  - Sets _isAnimating = false                                 │      │
+│  │  - Calls setState()                                           │      │
+│  └──────────────────────────────────────────────────────────────┘      │
+│                                                                          │
+│  Animation Sequences:                                                   │
+│  ┌──────────────────────────────────────────────────────────────┐      │
+│  │ _playTreatCaughtSequence(finalScore) async                   │      │
+│  │   await Future.wait([                                         │      │
+│  │     _playHudSequence(finalScore),                             │      │
+│  │     _playPuppyEatingSequence(),                               │      │
+│  │   ])                                                           │      │
+│  └──────────────────────────────────────────────────────────────┘      │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────┐      │
+│  │ _playHudSequence(finalScore) async                           │      │
+│  │   await hudController.onTreatCaught(                          │      │
+│  │     finalScore: finalScore,                                   │      │
+│  │     currentEnergy: ...,                                       │      │
+│  │     onEachLevelUp: () {                                       │      │
+│  │       puppyGameWorld.playLevelUpAnimation();                  │      │
+│  │     }                                                          │      │
+│  │   )                                                            │      │
+│  └──────────────────────────────────────────────────────────────┘      │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────┐      │
+│  │ _playPuppyEatingSequence() async                             │      │
+│  │   await puppyGameWorld.playEatingSequence()                   │      │
+│  └──────────────────────────────────────────────────────────────┘      │
+└─────────────────────────────────────────────────────────────────────────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+                    ▼              ▼              ▼
+        ┌───────────────┐  ┌──────────────┐  ┌───────────────┐
+        │ HudController │  │ PachinkoGame │  │ PuppyGameWorld│
+        │               │  │   World      │  │               │
+        └───────────────┘  └──────────────┘  └───────────────┘
+
+================================================================================
+COMPONENT RESPONSIBILITIES
+================================================================================
+
+1. PachinkoGame (StatefulWidget)
+   ---------------------------------
+   Role: Central coordinator and orchestrator
+   Location: lib/shared/component/bigComponent/pachinko/PachinkoGame.dart
+
+   Owns:
+   - GameLogic game
+   - HudController hudController
+   - PachinkoGameWorld gameWorld
+   - PuppyGameWorld puppyGameWorld
+   - bool _isAnimating (animation blocking flag)
+
+   Provides to children:
+   - Callback: onPegHit() -> void
+   - Callback: onTreatCaught(multiplier) -> Future<void>
+
+   Receives from:
+   - User actions (_loadTreat, _dropTreat button handlers)
+   - Game component callbacks (peg hits, slot catches)
+
+   Triggers:
+   - setState() for UI rebuilds
+   - Animation sequences via await
+   - HUD updates via hudController methods
+   - Puppy animations via puppyGameWorld methods
+
+
+2. GameLogic (Pure Dart Class)
+   ---------------------------------
+   Role: Pure game logic with NO UI dependencies
+   Location: lib/shared/component/bigComponent/pachinko/models/GameLogic.dart
+
+   State Fields:
+   - remainingTreats: int
+   - isTreatLoaded: bool
+   - statusMessage: String?
+   - currentRoundScore: int
+   - currentRoundCollisions: int
+
+   Methods:
+   - recordPegHit() -> void
+     * Increments currentRoundCollisions
+     * Adds points to currentRoundScore
+     * NO notifications or side effects
+
+   - treatCaught(multiplier) -> int
+     * Calculates finalScore = currentRoundScore * multiplier
+     * Sets statusMessage
+     * Resets currentRoundScore and currentRoundCollisions
+     * Returns finalScore
+     * NO notifications or side effects
+
+   - loadTreat() -> bool
+     * Decrements remainingTreats
+     * Sets isTreatLoaded = true
+     * Returns success/failure
+
+   - dropTreat() -> bool
+     * Sets isTreatLoaded = false
+     * Returns success/failure
+
+   Computed Properties:
+   - canLoadTreat: remainingTreats > 0 && !isTreatLoaded
+   - isGameOver: remainingTreats == 0 && !isTreatLoaded
+
+   KEY: This is NOT a ChangeNotifier. No listeners, no notifyListeners().
+
+
+3. PachinkoGameWorld (Forge2DGame)
+   ---------------------------------
+   Role: Physics simulation for pegs, treats, slots
+   Location: lib/shared/component/bigComponent/pachinko/PachinkoGameWorld.dart
+
+   Constructor Parameters:
+   - GameLogic game (read-only access to game state)
+   - void Function() onPegHitCallback
+   - Future<void> Function(double) onTreatCaughtCallback
+
+   Responsibilities:
+   - Manages Forge2D physics world
+   - Contains PegBody, TreatBody, SlotZone, WallBody components
+   - Spawns treats at specified positions
+   - Provides callbacks to child components
+
+   Methods:
+   - spawnTreat(position) -> void
+   - removeTreat() -> void
+
+   Event Flow:
+   - PegBody detects collision → calls onPegHitCallback()
+   - SlotZone detects treat → calls onTreatCaughtCallback(multiplier)
+
+
+4. PegBody (BodyComponent)
+   ---------------------------------
+   Role: Individual peg with collision detection and animation
+   Location: lib/shared/component/bigComponent/pachinko/components/PegBody.dart
+
+   State:
+   - PegState _state (normal, hit)
+
+   On Collision:
+   - Updates game logic: _game.game.recordPegHit()
+   - Triggers callback: _game.onPegHitCallback()
+   - Plays visual animation (sprite change, scale effect)
+   - Returns to normal state after duration
+
+
+5. SlotZone (BodyComponent)
+   ---------------------------------
+   Role: Catch zones at bottom with score multipliers
+   Location: lib/shared/component/bigComponent/pachinko/components/SlotZone.dart
+
+   Properties:
+   - double multiplier (1.0x, 1.5x, 2.0x, etc.)
+
+   On Treat Contact:
+   - Updates game logic: _game.game.treatCaught(multiplier)
+   - Triggers callback: unawaited(_game.onTreatCaughtCallback(multiplier))
+   - Schedules treat removal
+
+   NOTE: Uses unawaited() because callback is async (fire-and-forget)
+
+
+6. HudController (Facade)
+   ---------------------------------
+   Role: Coordinates HUD element controllers
+   Location: lib/shared/component/bigComponent/pachinko/hud/hud_controller.dart
+
+   Owns:
+   - EnergyBarController energy
+   - ScoreboardController score
+
+   Methods:
+   - onPegHit(points) -> Future<void>
+     * Delegates to score.addPointsAndCollision(points)
+
+   - onTreatCaught(finalScore, currentEnergy, onEachLevelUp) -> Future<void>
+     * Delegates to energy.onTreatCaught(finalScore, onLevelUp: onEachLevelUp)
+     * Calls score.resetRound()
+
+   KEY: Accepts onEachLevelUp callback and passes it to energy controller
+
+
+7. EnergyBarController (ChangeNotifier)
+   ---------------------------------
+   Role: Manages puppy energy bar with level-up logic
+   Location: lib/shared/component/bigComponent/pachinko/hud/energy_bar_controller.dart
+
+   State:
+   - double displayEnergy (0 to maxEnergy)
+   - int level
+   - double maxEnergy
+
+   Methods:
+   - onTreatCaught(newScore, onLevelUp) -> Future<void>
+     * Adds newScore to displayEnergy
+     * While displayEnergy >= maxEnergy:
+       - Animates bar fill to 100%
+       - Plays flash animation
+       - Calls onLevelUp() callback *** KEY SYNCHRONIZATION POINT ***
+       - Increments level
+       - Resets displayEnergy to 0
+       - Subtracts maxEnergy from remaining score
+     * Animates leftover energy
+
+   Generation Token Pattern:
+   - beginSequence() creates cancellation token
+   - isCurrent(gen) checks if animation is still valid
+   - Allows interruption of stale animations
+
+
+8. PuppyGameWorld (FlameGame)
+   ---------------------------------
+   Role: Puppy animation rendering
+   Location: lib/shared/component/bigComponent/pachinko/PuppyGameWorld.dart
+
+   Owns:
+   - PuppyComponent puppyComponent
+
+   Methods:
+   - playEatingSequence() -> Future<void>
+     * Calls puppyComponent.celebrateTreat()
+     * Awaits duration for eating → happy → idle sequence
+
+   - playLevelUpAnimation() -> void
+     * Calls puppyComponent.queueLevelUp()
+     * Queues level-up animation to play after current animation
+
+
+9. PuppyComponent (SpriteAnimationComponent)
+   ---------------------------------
+   Role: Animated puppy sprite with state machine
+   Location: lib/shared/component/bigComponent/pachinko/components/PuppyComponent.dart
+
+   States:
+   - PuppyState.idle (looping)
+   - PuppyState.eating (one-shot)
+   - PuppyState.happy (one-shot)
+   - PuppyState.levelUp (one-shot, queued)
+
+   Animation Queue:
+   - List<PuppyState> _animationQueue
+   - bool _isPlayingQueued
+
+   Methods:
+   - celebrateTreat() -> void
+     * Starts eating → happy → idle sequence
+
+   - queueLevelUp() -> void
+     * Adds PuppyState.levelUp to queue
+     * Processes queue when idle
+
+   State Transitions:
+   - eating → (0.9s) → happy → (1.04s) → idle
+   - levelUp → (1.04s) → idle → process next queued
+
+   KEY: Queue ensures multiple level-ups play sequentially without overlap
+
+
+10. ScoreboardController (ChangeNotifier)
+    ---------------------------------
+    Role: Manages score and collision count
+    Location: lib/shared/component/bigComponent/pachinko/hud/scoreboard_controller.dart
+
+    State:
+    - int score
+    - int collisionCount
+
+    Methods:
+    - addPointsAndCollision(points) -> Future<void>
+    - resetRound() -> void
+
+================================================================================
+EVENT FLOW DIAGRAMS
+================================================================================
+
+EVENT 1: PEG HIT
+----------------
+
+User drops treat → Treat falls → Hits peg
+                                    │
+                                    ▼
+                        ┌─────────────────────────┐
+                        │ PegBody.onHit()         │
+                        │ (in physics world)      │
+                        └─────────────────────────┘
+                                    │
+                        ┌───────────┼───────────┐
+                        │                       │
+                        ▼                       ▼
+        ┌───────────────────────┐   ┌──────────────────────────┐
+        │ game.recordPegHit()   │   │ _game.onPegHitCallback() │
+        │ (update game logic)   │   │ (trigger coordinator)    │
+        └───────────────────────┘   └──────────────────────────┘
+                                                │
+                                                ▼
+                                ┌──────────────────────────────┐
+                                │ PachinkoGame.onPegHit()      │
+                                │ (coordinator method)         │
+                                └──────────────────────────────┘
+                                                │
+                                    ┌───────────┼───────────┐
+                                    ▼                       ▼
+                    ┌────────────────────────┐   ┌──────────────────┐
+                    │ hudController.onPegHit │   │ setState()       │
+                    │ (fire-and-forget)      │   │ (rebuild UI)     │
+                    └────────────────────────┘   └──────────────────┘
+                                │
+                                ▼
+                ┌──────────────────────────────────┐
+                │ ScoreboardController             │
+                │ .addPointsAndCollision(points)   │
+                │ (animate score pop)              │
+                └──────────────────────────────────┘
+
+
+EVENT 2: TREAT CAUGHT (WITH LEVEL-UP SYNCHRONIZATION)
+------------------------------------------------------
+
+Treat lands in slot
+        │
+        ▼
+┌────────────────────────┐
+│ SlotZone.beginContact  │
+│ (physics collision)    │
+└────────────────────────┘
+        │
+        ┌───────────┼───────────┐
+        │                       │
+        ▼                       ▼
+┌───────────────────────┐   ┌──────────────────────────────┐
+│ game.treatCaught()    │   │ unawaited(                   │
+│ (update game logic)   │   │   onTreatCaughtCallback()    │
+│ returns finalScore    │   │ )                            │
+└───────────────────────┘   └──────────────────────────────┘
+                                        │
+                                        ▼
+                        ┌──────────────────────────────────┐
+                        │ PachinkoGame.onTreatCaught(mult) │
+                        │ _isAnimating = true              │
+                        └──────────────────────────────────┘
+                                        │
+                                        ▼
+                        ┌──────────────────────────────────┐
+                        │ _playTreatCaughtSequence()       │
+                        │ await Future.wait([...])         │
+                        └──────────────────────────────────┘
+                                        │
+                        ┌───────────────┼───────────────┐
+                        │                               │
+                        ▼                               ▼
+            ┌───────────────────────┐       ┌─────────────────────────┐
+            │ _playHudSequence()    │       │ _playPuppyEating        │
+            │                       │       │ Sequence()              │
+            └───────────────────────┘       └─────────────────────────┘
+                        │                               │
+                        ▼                               ▼
+    ┌────────────────────────────────┐      ┌─────────────────────────┐
+    │ hudController.onTreatCaught(   │      │ puppyGameWorld          │
+    │   finalScore: ...,             │      │ .playEatingSequence()   │
+    │   onEachLevelUp: () {          │      │                         │
+    │     puppyGameWorld             │      │ eating → happy → idle   │
+    │       .playLevelUpAnimation()  │      │ (parallel with HUD)     │
+    │   }                            │      └─────────────────────────┘
+    │ )                              │
+    └────────────────────────────────┘
+                        │
+                        ▼
+    ┌────────────────────────────────────────────────┐
+    │ EnergyBarController.onTreatCaught()            │
+    │                                                │
+    │ Loop while energy >= maxEnergy:                │
+    │   1. Animate fill to 100%                      │
+    │   2. Play flash animation                      │
+    │   3. *** CALL onLevelUp() CALLBACK ***         │ ◄─┐
+    │   4. Increment level                           │   │
+    │   5. Reset energy to 0                         │   │
+    │   6. Subtract maxEnergy from remaining         │   │
+    │                                                │   │
+    │ Animate leftover energy                        │   │
+    └────────────────────────────────────────────────┘   │
+                                    │                    │
+                        ┌───────────┘                    │
+                        │ SYNCHRONIZATION                │
+                        │ POINT                          │
+                        ▼                                │
+        ┌──────────────────────────────┐                │
+        │ onEachLevelUp() callback     │ ───────────────┘
+        │ (from PachinkoGame)          │
+        └──────────────────────────────┘
+                        │
+                        ▼
+        ┌──────────────────────────────────────┐
+        │ puppyGameWorld.playLevelUpAnimation()│
+        └──────────────────────────────────────┘
+                        │
+                        ▼
+        ┌──────────────────────────────────────┐
+        │ puppyComponent.queueLevelUp()        │
+        │ - Adds to animation queue            │
+        │ - Plays when idle                    │
+        │ - Returns to idle after 1.04s        │
+        │ - Processes next queued if any       │
+        └──────────────────────────────────────┘
+
+*** CRITICAL SYNCHRONIZATION MECHANISM ***
+
+The key requirement is: "Each time the energy bar flashes, the puppy must
+play a level-up animation in sync."
+
+This is achieved through:
+1. EnergyBarController calls onLevelUp() AFTER each flash completes
+2. PachinkoGame provides callback that routes to puppyGameWorld
+3. PuppyComponent queues level-ups to play sequentially
+4. Result: Each flash → one puppy level-up animation, perfectly synced
+
+Example: User scores 3000 points, puppy levels up 3 times:
+- Energy bar fills → flash 1 → onLevelUp() → puppy levelUp animation 1
+- Energy bar fills → flash 2 → onLevelUp() → puppy levelUp animation 2
+- Energy bar fills → flash 3 → onLevelUp() → puppy levelUp animation 3
+- Energy bar fills → 50% (leftover)
+
+All synchronized via callback chain!
+
+
+EVENT 3: LOAD TREAT (BUTTON)
+-----------------------------
+
+User taps "LOAD TREAT" button
+        │
+        ▼
+┌─────────────────────────┐
+│ LoadTreatButton.onTap   │
+└─────────────────────────┘
+        │
+        ▼
+┌──────────────────────────┐
+│ PachinkoGame._loadTreat()│
+│ (checks _isAnimating)    │
+└──────────────────────────┘
+        │
+        ▼
+┌─────────────────────────┐
+│ game.loadTreat()        │
+│ (updates game logic)    │
+└─────────────────────────┘
+        │
+        ▼
+┌─────────────────────────┐
+│ setState()              │
+│ (rebuild UI)            │
+└─────────────────────────┘
+
+
+EVENT 4: DROP TREAT (TAP/DRAG)
+-------------------------------
+
+User taps/drags on board
+        │
+        ▼
+┌──────────────────────────┐
+│ GestureDetector callback │
+└──────────────────────────┘
+        │
+        ▼
+┌──────────────────────────┐
+│ PachinkoGame._dropTreat()│
+│ (checks _isAnimating)    │
+└──────────────────────────┘
+        │
+        ▼
+┌─────────────────────────┐
+│ game.dropTreat()        │
+│ (updates game logic)    │
+└─────────────────────────┘
+        │
+        ▼
+┌───────────────────────────┐
+│ gameWorld.spawnTreat(pos) │
+│ (creates physics body)    │
+└───────────────────────────┘
+        │
+        ▼
+┌─────────────────────────┐
+│ setState()              │
+│ (rebuild UI)            │
+└─────────────────────────┘
+
+================================================================================
+ANIMATION BLOCKING MECHANISM
+================================================================================
+
+Purpose: Prevent user input during critical animation sequences
+
+Implementation:
+- PachinkoGame._isAnimating: bool (default false)
+
+When Animation Starts (onTreatCaught):
+  setState(() => _isAnimating = true)
+
+When Animation Completes:
+  setState(() => _isAnimating = false)
+
+Blocks:
+  - _loadTreat() returns early if _isAnimating
+  - _dropTreat() returns early if _isAnimating
+  - onPegHit() returns early if _isAnimating
+  - LoadTreatButton.enabled = !_isAnimating && game.canLoadTreat && ...
+
+Result:
+  - No interruptions during treat caught sequence
+  - No race conditions between animations
+  - Clean, predictable animation flow
+
+================================================================================
+GENERATION TOKEN PATTERN (Animation Cancellation)
+================================================================================
+
+Used By: EnergyBarController, ScoreboardController
+
+Purpose: Allow new animations to cancel old ones
+
+Implementation:
+  class HudElementController extends ChangeNotifier with TickerProviderStateMixin {
+    int _currentGeneration = 0;
+
+    int beginSequence() => ++_currentGeneration;
+
+    bool isCurrent(int gen) => gen == _currentGeneration;
+  }
+
+Usage Example:
+  Future<void> onTreatCaught(int newScore, {void Function()? onLevelUp}) async {
+    final gen = beginSequence();  // New generation
+
+    // ... animation code ...
+
+    if (!isCurrent(gen)) return;  // Check if still current
+
+    // ... more animation ...
+  }
+
+Result:
+  - If new animation starts, old animation detects stale generation and exits
+  - No overlapping animations
+  - Clean cancellation without explicit cancellation tokens
+
+================================================================================
+FILE STRUCTURE
+================================================================================
+
+lib/shared/component/bigComponent/pachinko/
+├── PachinkoGame.dart               # Central coordinator (StatefulWidget)
+├── PachinkoGameWorld.dart          # Physics world (Forge2DGame)
+├── PuppyGameWorld.dart             # Animation world (FlameGame)
+├── PachinkoAssets.dart             # Asset loader
+│
+├── models/
+│   └── GameLogic.dart              # Pure game logic (NO ChangeNotifier)
+│
+├── components/
+│   ├── PegBody.dart                # Peg with collision detection
+│   ├── TreatBody.dart              # Treat physics body
+│   ├── WallBody.dart               # Wall boundaries
+│   ├── SlotZone.dart               # Slot catch zones
+│   └── PuppyComponent.dart         # Puppy sprite with animation queue
+│
+├── hud/
+│   ├── hud_controller.dart         # HUD facade coordinator
+│   ├── hud_element_controller.dart # Base class with generation tokens
+│   ├── energy_bar_controller.dart  # Energy bar logic + animations
+│   └── scoreboard_controller.dart  # Score + collision count
+│
+├── widgets/
+│   ├── TreatInventoryWidget.dart   # Shows remaining treats
+│   ├── ScoreDisplayWidget.dart     # Score + collision display
+│   ├── HorizontalEnergyBar.dart    # Energy bar UI widget
+│   └── LoadTreatButton.dart        # Load treat button
+│
+├── config/
+│   └── PachinkoConfig.dart         # Game constants
+│
+└── theme/
+    └── pixel_art_theme.dart        # Pixel art styling
+
+================================================================================
+KEY IMPORTS AND DEPENDENCIES
+================================================================================
+
+PachinkoGame.dart:
+  - dart:async (for unawaited, Future.wait)
+  - package:flame/components.dart (for Vector2)
+  - models/GameLogic.dart
+  - PachinkoGameWorld.dart, PuppyGameWorld.dart
+  - hud/hud_controller.dart
+
+SlotZone.dart:
+  - dart:async (for unawaited)
+
+PachinkoGameWorld.dart:
+  - models/GameLogic.dart (NOT GameState)
+
+PuppyGameWorld.dart:
+  - NO GameState import
+  - NO listener registration
+
+================================================================================
+CRITICAL DESIGN DECISIONS
+================================================================================
+
+1. WHY NO CHANGENOTIFIER ON GAMELOGIC?
+   -------------------------------------
+   - GameLogic is pure business logic with no UI concerns
+   - ChangeNotifier creates implicit coupling
+   - Explicit callbacks give coordinator full control
+   - Easier to test and reason about
+   - No hidden state propagation
+
+2. WHY CALLBACK PATTERN INSTEAD OF EVENTS?
+   -----------------------------------------
+   - Callbacks are explicit and type-safe
+   - Easy to trace event flow
+   - No event bus complexity
+   - Coordinator has full visibility
+   - Simpler debugging
+
+3. WHY UNAWAITED() FOR onTreatCaughtCallback?
+   -------------------------------------------
+   - Called from physics collision handler (synchronous context)
+   - Callback is async (long-running animation sequence)
+   - Fire-and-forget allows physics to continue
+   - Coordinator handles animation sequencing
+   - No blocking of physics engine
+
+4. WHY ANIMATION QUEUE IN PUPPYCOMPONENT?
+   ----------------------------------------
+   - Multiple level-ups can occur simultaneously (3000 points → 3 levels)
+   - Energy bar flashes 3 times sequentially
+   - Each flash must trigger one puppy animation
+   - Queue ensures animations play one after another
+   - No overlapping or missed animations
+
+5. WHY FUTURE.WAIT() FOR PARALLEL ANIMATIONS?
+   -------------------------------------------
+   - HUD sequence and puppy eating can run simultaneously
+   - Future.wait() runs them in parallel
+   - Waits for both to complete before unblocking
+   - Efficient use of time
+   - Both sequences are independent
+
+================================================================================
+TESTING SCENARIOS
+================================================================================
+
+SCENARIO 1: Single Peg Hit
+  Expected Flow:
+  1. Treat hits peg
+  2. PegBody calls onPegHitCallback
+  3. PachinkoGame.onPegHit() executes
+  4. Score increases
+  5. Score widget shows pop animation
+  6. UI updates via setState()
+
+SCENARIO 2: Treat Caught (No Level-Up)
+  Expected Flow:
+  1. Treat lands in 2.0x slot
+  2. SlotZone calls onTreatCaughtCallback(2.0)
+  3. PachinkoGame sets _isAnimating = true
+  4. Parallel animations start:
+     - Energy bar fills from current to current + (score × 2.0)
+     - Puppy plays eating → happy → idle
+  5. Both animations complete
+  6. _isAnimating = false
+  7. UI can accept input again
+
+SCENARIO 3: Treat Caught (Single Level-Up)
+  Expected Flow:
+  1. Treat lands in slot with enough points to level up once
+  2. Energy bar sequence:
+     - Fill to 100%
+     - Flash
+     - Call onLevelUp() → puppy plays levelUp animation
+     - Reset to 0
+     - Fill to 30% (leftover)
+  3. Puppy sequence (parallel):
+     - Eating → happy → idle
+     - LevelUp animation queued during happy
+     - LevelUp plays after idle
+     - Returns to idle
+  4. Both complete, _isAnimating = false
+
+SCENARIO 4: Treat Caught (Triple Level-Up)
+  Expected Flow:
+  1. Treat lands with 3000 points (3 levels)
+  2. Energy bar sequence:
+     - Fill to 100% → flash → onLevelUp() → puppy queues levelUp #1
+     - Fill to 100% → flash → onLevelUp() → puppy queues levelUp #2
+     - Fill to 100% → flash → onLevelUp() → puppy queues levelUp #3
+     - Fill to 50% (leftover)
+  3. Puppy sequence (parallel):
+     - Eating → happy → idle
+     - LevelUp #1 plays (from queue)
+     - LevelUp #2 plays (from queue)
+     - LevelUp #3 plays (from queue)
+     - Returns to idle
+  4. Result: 3 bar flashes synced with 3 puppy levelUps
+
+SCENARIO 5: User Tries to Drop During Animation
+  Expected Flow:
+  1. Treat caught animation in progress
+  2. _isAnimating = true
+  3. User taps "LOAD TREAT"
+  4. _loadTreat() checks _isAnimating, returns early
+  5. No action taken
+  6. After animation completes, button works again
+
+================================================================================
+KNOWN LIMITATIONS AND FUTURE ENHANCEMENTS
+================================================================================
+
+CURRENT LIMITATIONS:
+1. No sound effects integration (architecture supports it)
+2. No network sync for scores (GameLogic ready for API calls)
+3. Fixed animation durations (could be config-driven)
+4. No animation speed adjustment
+
+FUTURE ENHANCEMENTS:
+1. Sound Effects:
+   - Add SoundController similar to HudController
+   - Pass callbacks to components
+   - Play sounds during animations
+
+2. Network Integration:
+   - Add apiService parameter to PachinkoGame
+   - Call apiService.postTreatDropped() in onTreatCaught()
+   - Handle errors gracefully
+
+3. Particle Effects:
+   - Add ParticleController
+   - Trigger from coordinator sequences
+   - Sparkles on level-up, etc.
+
+4. Advanced Animation Control:
+   - Animation speed multiplier config
+   - Skip animation option for testing
+   - Pause/resume support
+
+================================================================================
+MIGRATION FROM OLD ARCHITECTURE
+================================================================================
+
+OLD ARCHITECTURE (ChangeNotifier-based):
+  - GameState extends ChangeNotifier
+  - GameState.addListener() in components
+  - GameState directly calls hudController methods
+  - Implicit event propagation
+  - Hidden coupling between components
+
+NEW ARCHITECTURE (Coordinator-based):
+  - GameLogic is plain Dart class
+  - No listeners or ChangeNotifier
+  - PachinkoGame receives callbacks from components
+  - PachinkoGame explicitly orchestrates sequences
+  - Clear, traceable event flow
+
+MIGRATION CHANGES:
+  ✅ Created GameLogic.dart (pure logic)
+  ✅ Removed ChangeNotifier from GameLogic
+  ✅ Added callback parameters to PachinkoGameWorld constructor
+  ✅ Updated PegBody to call onPegHitCallback
+  ✅ Updated SlotZone to call onTreatCaughtCallback
+  ✅ Added onEachLevelUp callback to HudController/EnergyBarController
+  ✅ Removed GameState listener from PuppyGameWorld
+  ✅ Added animation queue to PuppyComponent
+  ✅ Added _isAnimating flag to PachinkoGame
+  ✅ Removed gameState.triggerUpdate() calls
+  ✅ All UI updates now via setState() in PachinkoGame
+  ✅ Deleted old GameState.dart file
+
+================================================================================
+REVIEWER QUESTIONS TO CONSIDER
+================================================================================
+
+1. ARCHITECTURE CLARITY:
+   - Is the coordinator pattern clear and well-structured?
+   - Are responsibilities well-separated?
+   - Is the event flow easy to trace?
+
+2. SYNCHRONIZATION:
+   - Does the level-up sync mechanism work correctly?
+   - Are there any race conditions?
+   - Can animations interrupt each other?
+
+3. MAINTAINABILITY:
+   - Is the code easy to modify and extend?
+   - Are the abstractions at the right level?
+   - Is there unnecessary complexity?
+
+4. PERFORMANCE:
+   - Are there any performance bottlenecks?
+   - Is setState() called too frequently?
+   - Are animations optimized?
+
+5. ERROR HANDLING:
+   - What happens if animations fail?
+   - Are there edge cases not covered?
+   - Is there proper cleanup on dispose?
+
+6. TESTABILITY:
+   - Can components be tested in isolation?
+   - Are dependencies injectable?
+   - Is the game logic testable without UI?
+
+7. EXTENSIBILITY:
+   - How easy is it to add new animations?
+   - Can new game events be added cleanly?
+   - Is the architecture flexible for future features?
+
+================================================================================
+SUMMARY
+================================================================================
+
+The refactored Pachinko game architecture uses a COORDINATOR PATTERN where:
+
+1. PachinkoGame is the central orchestrator
+2. GameLogic is pure business logic (no UI dependencies)
+3. Callbacks provide explicit event communication
+4. Animation sequences are coordinated via async/await
+5. _isAnimating flag prevents input during animations
+6. onEachLevelUp callback syncs energy bar flashes with puppy animations
+7. Animation queue in PuppyComponent handles multiple level-ups
+8. Generation tokens allow animation cancellation
+9. setState() in coordinator triggers UI rebuilds
+10. Clean separation of concerns throughout
+
+KEY BENEFITS:
+✅ Clear event flow (easy to debug)
+✅ No hidden coupling (explicit dependencies)
+✅ Testable components (injectable callbacks)
+✅ Synchronized animations (callback chain)
+✅ Predictable state (single source of truth)
+✅ Maintainable code (well-separated concerns)
+
+The architecture successfully solves the critical requirement:
+"Each energy bar flash must trigger a synchronized puppy level-up animation"
+
+This is achieved through the callback chain:
+EnergyBarController → onLevelUp() → PachinkoGame → puppyGameWorld → queue
+
+================================================================================
+END OF ARCHITECTURE DOCUMENT
+================================================================================

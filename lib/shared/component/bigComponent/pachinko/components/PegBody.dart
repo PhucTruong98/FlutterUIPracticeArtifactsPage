@@ -97,8 +97,11 @@ class PegBody extends BodyComponent with ContactCallbacks {
   /// Mark peg as hit and start animation
   void onHit() {
     if (_state != PegState.hit) {
-      // Update game state via cached game reference
-      _game.gameState.recordPegHit();
+      // Update game logic
+      _game.game.recordPegHit();
+
+      // Trigger coordinator callback
+      _game.onPegHitCallback();
 
       _setState(PegState.hit, duration: PachinkoConfig.pegHitDuration.inMilliseconds / 1000.0);
 

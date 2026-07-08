@@ -64,7 +64,7 @@ class EnergyBarController extends HudElementController {
     return true;
   }
 
-  Future<void> onTreatCaught(int newScore) async {
+  Future<void> onTreatCaught(int newScore, {void Function()? onLevelUp}) async {
     final gen = beginSequence();
     var newTotalEnergy = displayEnergy + newScore;
 
@@ -72,6 +72,10 @@ class EnergyBarController extends HudElementController {
       //first pump
       if (!await _animateFill(displayEnergy / maxEnergy, 1.0, gen)) return;
       if (!await _flashCycles(PachinkoConfig.levelFlashCycles, gen)) return;
+
+      // Trigger level-up callback after flash completes
+      onLevelUp?.call();
+
       //update text
       level++;
       displayEnergy = 0.0;

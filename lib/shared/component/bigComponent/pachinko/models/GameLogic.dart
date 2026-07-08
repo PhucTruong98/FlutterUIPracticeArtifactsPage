@@ -1,12 +1,8 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
-import '../hud/hud_controller.dart';
 import '../config/PachinkoConfig.dart';
 
-/// Game state model for Pachinko game
-/// Now focused on game mechanics only - HUD state lives in HudController
-class GameState extends ChangeNotifier {
-
+/// Pure game logic for Pachinko game
+/// Contains NO UI dependencies - just game rules and state
+class GameLogic {
   int remainingTreats;
   bool isTreatLoaded;
   String? statusMessage;
@@ -15,21 +11,13 @@ class GameState extends ChangeNotifier {
   int currentRoundScore;
   int currentRoundCollisions;
 
-  // HUD controller reference (set after construction to avoid circular dependency)
-  HudController? hudController;
-
-  GameState({
+  GameLogic({
     int? remainingTreats,
     this.isTreatLoaded = false,
     this.statusMessage,
     this.currentRoundScore = 0,
     this.currentRoundCollisions = 0,
   }) : remainingTreats = remainingTreats ?? PachinkoConfig.initialTreats;
-
-  /// Set HUD controller reference (called after construction)
-  void setHudController(HudController controller) {
-    hudController = controller;
-  }
 
   /// Reset game to initial state
   void reset() {
@@ -38,7 +26,6 @@ class GameState extends ChangeNotifier {
     currentRoundCollisions = 0;
     isTreatLoaded = false;
     statusMessage = null;
-    notifyListeners();
   }
 
   /// Load a treat (consume from inventory)
@@ -47,7 +34,6 @@ class GameState extends ChangeNotifier {
       remainingTreats--;
       isTreatLoaded = true;
       statusMessage = 'Tap to Drop';
-      notifyListeners();
       return true;
     }
     return false;
@@ -58,7 +44,6 @@ class GameState extends ChangeNotifier {
     if (isTreatLoaded) {
       isTreatLoaded = false;
       statusMessage = null;
-      notifyListeners();
       return true;
     }
     return false;
@@ -68,13 +53,9 @@ class GameState extends ChangeNotifier {
   void recordPegHit() {
     currentRoundCollisions++;
     currentRoundScore += PachinkoConfig.pegHitPoints;
-    notifyListeners();
-
-    // Trigger HUD animation (fire-and-forget)
-    unawaited(hudController?.onPegHit(PachinkoConfig.pegHitPoints));
   }
 
-  /// Treat caught by puppy - returns the final score for HUD update
+  /// Treat caught by puppy - returns the final score
   int treatCaught({double multiplier = 1.0}) {
     // Apply multiplier to score
     final finalScore = (currentRoundScore * multiplier).toInt();
@@ -86,20 +67,11 @@ class GameState extends ChangeNotifier {
       statusMessage = 'Treat Collected! $finalScore Points (x$multiplier)';
     }
 
-    // Trigger HUD animation (fire-and-forget)
-    if (hudController != null) {
-      unawaited(hudController!.onTreatCaught(
-        finalScore: finalScore,
-      ));
-    }
-
     // Reset round state
-    final score = finalScore;
     currentRoundScore = 0;
     currentRoundCollisions = 0;
-    notifyListeners();
 
-    return score;
+    return finalScore;
   }
 
   /// Treat missed (timed out or settled without being caught)
@@ -109,12 +81,6 @@ class GameState extends ChangeNotifier {
     // Reset round state
     currentRoundScore = 0;
     currentRoundCollisions = 0;
-    notifyListeners();
-  }
-
-  /// Trigger UI update (called when world state changes that aren't tracked in GameState)
-  void triggerUpdate() {
-    notifyListeners();
   }
 
   /// Check if can load treat (note: caller should also check world.currentTreat == null)

@@ -22,28 +22,16 @@ class HudController {
 
 
   /// Cross-element event: treat caught.
-  /// Check for level-up and route to appropriate energy method.
+  /// Delegates to energy controller with optional level-up callback.
   Future<void> onTreatCaught({
     required int finalScore,
+    required double currentEnergy,
+    void Function()? onEachLevelUp,
   }) async {
-    // Calculate new energy
-    // final newTotalEnergy = energy.displayEnergy + finalScore;
-
-    // // Check if level-up occurred
-    // if (newTotalEnergy >= energy.maxEnergy) {
-    //   // Level up!
-    //   final overflow = newTotalEnergy - energy.maxEnergy;
-    //   await energy.levelUp(
-    //     newLevel: energy.level + 1,
-    //     overflow: overflow,
-    //     newMax: energy.maxEnergy, // Keep same max for now
-    //   );
-    // } else {
-    //   // Normal energy gain
-    //   await energy.setEnergy(newTotalEnergy);
-    // }
-
-    await energy.onTreatCaught(finalScore);
+    await energy.onTreatCaught(
+      finalScore,
+      onLevelUp: onEachLevelUp,
+    );
 
     // Reset round score
     score.resetRound();

@@ -15,12 +15,17 @@ enum PuppyState {
 
 /// Animated puppy component that reacts to treats
 ///
-/// Uses sprite sheet animations for smooth frame-by-frame animations
+/// Uses sprite sheet animations for smooth frame-by-frame animations.
+/// Supports animation queueing for level-up events.
 class PuppyComponent extends SpriteAnimationComponent {
   final PachinkoAssets assets;
 
   PuppyState _state = PuppyState.idle;
   TimerComponent? _stateTransitionTimer;
+
+  // Animation queue for level-ups
+  final List<PuppyState> _animationQueue = [];
+  bool _isPlayingQueued = false;
 
   // Cached animations
   late SpriteAnimation _idleAnimation;
@@ -65,6 +70,26 @@ class PuppyComponent extends SpriteAnimationComponent {
     _setState(PuppyState.eating);
   }
 
+  /// Queue a level-up animation (can be called multiple times)
+  /// Animations will play sequentially without interruption
+  void queueLevelUp() {
+    _animationQueue.add(PuppyState.levelUp);
+    _processQueue();
+  }
+
+  /// Process queued animations
+  void _processQueue() {
+    // Don't start new queued animation if currently playing one
+    if (_isPlayingQueued || _animationQueue.isEmpty) return;
+
+    // Only play queued animations when in idle state
+    if (_state != PuppyState.idle) return;
+
+    _isPlayingQueued = true;
+    final nextState = _animationQueue.removeAt(0);
+    _setState(nextState);
+  }
+
   /// Update puppy state and animation
   void _setState(PuppyState newState) {
     if (_state == newState) return;
@@ -94,18 +119,23 @@ class PuppyComponent extends SpriteAnimationComponent {
         removeOnFinish: true,
       );
       add(_stateTransitionTimer!);
+    } else if (_state == PuppyState.levelUp) {
+      // After levelUp animation finishes, return to idle and process queue
+      _stateTransitionTimer = TimerComponent(
+        period: 1.04, // 13 frames × 0.08s (adjust based on actual levelUp animation duration)
+        repeat: false,
+        onTick: () {
+          _isPlayingQueued = false;
+          _setState(PuppyState.idle);
+          _processQueue(); // Process next queued animation if any
+        },
+        removeOnFinish: true,
+      );
+      add(_stateTransitionTimer!);
+    } else if (_state == PuppyState.idle) {
+      // Returning to idle - check if there are queued animations
+      _processQueue();
     }
-
-    // else if (_state == PuppyState.levelUp) {
-    //   // After happy animation finishes, return to idle
-    //   _stateTransitionTimer = TimerComponent(
-    //     period: 1.04, // 13 frames × 0.08s
-    //     repeat: false,
-    //     onTick: () => _setState(PuppyState.idle),
-    //     removeOnFinish: true,
-    //   );
-    //   add(_stateTransitionTimer!);
-    // }
   }
 
   /// Get animation for given state

@@ -2,25 +2,20 @@ import 'package:flame/game.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'models/GameState.dart';
 import 'components/PuppyComponent.dart';
 import 'PachinkoAssets.dart';
 
 /// Flame game world for puppy animations
 ///
 /// Separate from main physics world to keep animations isolated.
-/// Listens to GameState for treat caught events and triggers puppy animations.
+/// Controlled by PachinkoGame coordinator via explicit method calls.
 class PuppyGameWorld extends FlameGame {
-  final GameState gameState;
-
   late PuppyComponent puppyComponent;
   late PachinkoAssets pachinkoAssets;
 
   final double puppyZoom  = 2.0;
 
-  PuppyGameWorld({
-    required this.gameState,
-  }) : super();
+  PuppyGameWorld() : super();
 
   @override
   Future<void> onLoad() async {
@@ -47,23 +42,21 @@ class PuppyGameWorld extends FlameGame {
 
     // Apply 2x zoom to camera
     camera.viewfinder.zoom = 1.0;
-
-    // Listen to game state changes
-    gameState.addListener(_onGameStateChanged);
   }
 
-  @override
-  void onRemove() {
-    gameState.removeListener(_onGameStateChanged);
-    super.onRemove();
+  /// Play the full eating sequence (eating → happy → idle)
+  /// Called by PachinkoGame coordinator when treat is caught
+  Future<void> playEatingSequence() async {
+    puppyComponent.celebrateTreat();
+
+    // Wait for eating (0.9s) + happy (1.04s) animations to complete
+    await Future.delayed(const Duration(milliseconds: 1940));
   }
 
-  /// Handle game state changes
-  void _onGameStateChanged() {
-    // Trigger puppy celebration when treat is caught
-    if (gameState.statusMessage?.contains('Collected') == true) {
-      puppyComponent.celebrateTreat();
-    }
+  /// Play level-up animation (can be queued)
+  /// Called by PachinkoGame coordinator during energy bar flash
+  void playLevelUpAnimation() {
+    puppyComponent.queueLevelUp();
   }
 
   void _createBackground()

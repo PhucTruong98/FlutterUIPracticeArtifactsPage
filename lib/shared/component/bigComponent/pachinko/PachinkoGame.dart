@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-import 'models/GameState.dart';
+import 'package:flame/components.dart';
+import 'models/GameLogic.dart';
 import 'PachinkoGameWorld.dart';
 import 'PuppyGameWorld.dart';
 import 'hud/hud_controller.dart';
@@ -20,27 +22,27 @@ class PachinkoGame extends StatefulWidget {
 }
 
 class _PachinkoGameState extends State<PachinkoGame> {
-  late GameState gameState;
+  late GameLogic game;  // Pure game logic
   late PachinkoGameWorld gameWorld;
   late PuppyGameWorld puppyGameWorld;
   late HudController hudController;
-  late ValueNotifier<double> treatPreviewXNotifier; // Horizontal position for treat drop preview
+  late ValueNotifier<double> treatPreviewXNotifier;
+
+  // Animation coordination
+  bool _isAnimating = false;
 
   @override
   void initState() {
     super.initState();
-    gameState = GameState();
+    game = GameLogic();
     hudController = HudController(maxEnergy: PachinkoConfig.maxPuppyEnergy);
 
-    // Link GameState and HudController
-    gameState.setHudController(hudController);
-
     gameWorld = PachinkoGameWorld(
-      gameState: gameState,
+      game: game,
+      onPegHitCallback: onPegHit,
+      onTreatCaughtCallback: onTreatCaught,
     );
-    puppyGameWorld = PuppyGameWorld(
-      gameState: gameState,
-    );
+    puppyGameWorld = PuppyGameWorld();
     treatPreviewXNotifier = ValueNotifier<double>(0.0);
   }
 
@@ -51,15 +53,69 @@ class _PachinkoGameState extends State<PachinkoGame> {
     super.dispose();
   }
 
+  // ===== Game Event Coordinators (called by game components) =====
+
+  void onPegHit() {
+    if (_isAnimating) return;  // Block during animations
+
+    game.recordPegHit();
+    unawaited(hudController.onPegHit(PachinkoConfig.pegHitPoints));
+    setState(() {});
+  }
+
+  Future<void> onTreatCaught(double multiplier) async {
+    if (_isAnimating) return;
+
+    setState(() => _isAnimating = true);
+
+    final finalScore = game.treatCaught(multiplier: multiplier);
+
+    // Execute animation sequence
+    await _playTreatCaughtSequence(finalScore);
+
+    setState(() => _isAnimating = false);
+  }
+
+  // ===== Animation Sequences =====
+
+  Future<void> _playTreatCaughtSequence(int finalScore) async {
+    // Start HUD and Puppy animations in parallel
+    await Future.wait([
+      _playHudSequence(finalScore),
+      _playPuppyEatingSequence(),
+    ]);
+  }
+
+  Future<void> _playHudSequence(int finalScore) async {
+    await hudController.onTreatCaught(
+      finalScore: finalScore,
+      currentEnergy: hudController.energy.displayEnergy,
+      onEachLevelUp: () {
+        // Callback during each flash - trigger puppy level-up animation
+        puppyGameWorld.playLevelUpAnimation();
+      },
+    );
+  }
+
+  Future<void> _playPuppyEatingSequence() async {
+    await puppyGameWorld.playEatingSequence();
+  }
+
+  // ===== Button Handlers =====
 
   void _loadTreat() {
-    if (gameState.loadTreat() && gameWorld.currentTreat == null) {
-      treatPreviewXNotifier.value = 0.0; // Reset preview to center
+    if (_isAnimating) return;  // Block during animations
+
+    if (game.loadTreat() && gameWorld.currentTreat == null) {
+      treatPreviewXNotifier.value = 0.0;
+      setState(() {});
     }
   }
 
   void _dropTreat() {
-    if (gameState.dropTreat()) {
+    if (_isAnimating) return;  // Block during animations
+
+    if (game.dropTreat()) {
       // Constrain X position between walls (with margin for treat radius)
       final maxX = PachinkoGameWorld.boardWidth / 2 - 1;
       final minX = -maxX;
@@ -69,6 +125,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
       gameWorld.spawnTreat(
         position: Vector2(clampedX, -PachinkoGameWorld.boardHeight / 2 + 2),
       );
+      setState(() {});
     }
   }
 
@@ -87,31 +144,26 @@ class _PachinkoGameState extends State<PachinkoGame> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Section - Inventory and Score (reactive to gameState)
-            ListenableBuilder(
-              listenable: gameState,
-              builder: (context, child) {
-                return Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/pachinko/cloudTop.jpg'),
-                      fit: BoxFit.cover,
-                    ),
+            // Top Section - Inventory and Score
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/pachinko/cloudTop.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TreatInventoryWidget(
+                    remainingTreats: game.remainingTreats,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TreatInventoryWidget(
-                        remainingTreats: gameState.remainingTreats,
-                      ),
-                      ScoreDisplayWidget(
-                        controller: hudController.score,
-                      ),
-                    ],
+                  ScoreDisplayWidget(
+                    controller: hudController.score,
                   ),
-                );
-              },
+                ],
+              ),
             ),
 
             // Middle Section - Pachinko Board
@@ -140,14 +192,8 @@ class _PachinkoGameState extends State<PachinkoGame> {
                     ),
 
                     // Treat aiming overlay (shown when treat is loaded, not dropped yet)
-                    ListenableBuilder(
-                      listenable: gameState,
-                      builder: (context, child) {
-                        if (!gameState.isTreatLoaded) {
-                          return const SizedBox.shrink();
-                        }
-
-                        return LayoutBuilder(
+                    if (game.isTreatLoaded)
+                      LayoutBuilder(
                           builder: (context, constraints) {
                             return ValueListenableBuilder(
                               valueListenable: treatPreviewXNotifier,
@@ -213,19 +259,11 @@ class _PachinkoGameState extends State<PachinkoGame> {
                               },
                             );
                           },
-                        );
-                      },
-                    ),
+                        ),
 
-                    // Status message overlay (reactive to gameState)
-                    ListenableBuilder(
-                      listenable: gameState,
-                      builder: (context, child) {
-                        if (gameState.statusMessage == null) {
-                          return const SizedBox.shrink();
-                        }
-
-                        return Positioned(
+                    // Status message overlay
+                    if (game.statusMessage != null)
+                      Positioned(
                           top: 16,
                           left: 0,
                           right: 0,
@@ -239,7 +277,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                                 color: PixelArtTheme.success,
                               ),
                               child: Text(
-                                gameState.statusMessage!.toUpperCase(),
+                                game.statusMessage!.toUpperCase(),
                                 style: PixelArtTheme.pixelText(
                                   fontSize: 8,
                                   color: Colors.white,
@@ -247,9 +285,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
                   ],
                 ),
               ),
@@ -259,10 +295,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
             HorizontalEnergyBar(controller: hudController.energy),
 
             // Bottom Section - Puppy Animation World + UI Overlay
-            ListenableBuilder(
-              listenable: gameState,
-              builder: (context, child) {
-                return Container(
+            Container(
                   height: 150, // Fixed height for bottom section
                   decoration: const BoxDecoration(
                     image: DecorationImage(
@@ -290,14 +323,14 @@ class _PachinkoGameState extends State<PachinkoGame> {
                             // Load Treat Button
                             LoadTreatButton(
                               onPressed: _loadTreat,
-                              enabled: gameState.canLoadTreat && gameWorld.currentTreat == null,
+                              enabled: !_isAnimating && game.canLoadTreat && gameWorld.currentTreat == null,
                             ),
                           ],
                         ),
                       ),
 
                       // Game Over Message
-                      if (gameState.isGameOver && gameWorld.currentTreat == null)
+                      if (game.isGameOver && gameWorld.currentTreat == null)
                         Positioned(
                           left: 0,
                           right: 0,
@@ -324,7 +357,8 @@ class _PachinkoGameState extends State<PachinkoGame> {
                                 const SizedBox(height: 12),
                                 GestureDetector(
                                   onTap: () {
-                                    gameState.reset();
+                                    game.reset();
+                                    setState(() {});
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
@@ -349,9 +383,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                         ),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
           ],
         ),
       ),
