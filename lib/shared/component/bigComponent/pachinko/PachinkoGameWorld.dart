@@ -15,8 +15,6 @@ import 'config/PachinkoConfig.dart';
 /// Main Forge2D game world for Pachinko physics simulation
 class PachinkoGameWorld extends Forge2DGame {
   final GameLogic game;
-  final void Function() onPegHitCallback;
-  final Future<void> Function(double) onTreatCaughtCallback;
 
   TreatBody? currentTreat;
   List<PegBody> pegs = [];
@@ -32,8 +30,6 @@ class PachinkoGameWorld extends Forge2DGame {
 
   PachinkoGameWorld({
     required this.game,
-    required this.onPegHitCallback,
-    required this.onTreatCaughtCallback,
   }) : super(
           gravity: Vector2(0, PachinkoConfig.gravity), // Downward gravity
           camera: CameraComponent.withFixedResolution(

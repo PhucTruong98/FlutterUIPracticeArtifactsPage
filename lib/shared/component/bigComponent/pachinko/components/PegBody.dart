@@ -7,6 +7,7 @@ import 'TreatBody.dart';
 import '../PachinkoAssets.dart';
 import '../PachinkoGameWorld.dart';
 import '../config/PachinkoConfig.dart';
+import '../models/GameEventBus.dart';
 
 /// Enum representing all possible states for a peg
 enum PegState {
@@ -100,8 +101,8 @@ class PegBody extends BodyComponent with ContactCallbacks {
       // Update game logic
       _game.game.recordPegHit();
 
-      // Trigger coordinator callback
-      _game.onPegHitCallback();
+      // Emit event to coordinator
+      GameEventBus.instance.emit(const PegHitEvent());
 
       _setState(PegState.hit, duration: PachinkoConfig.pegHitDuration.inMilliseconds / 1000.0);
 

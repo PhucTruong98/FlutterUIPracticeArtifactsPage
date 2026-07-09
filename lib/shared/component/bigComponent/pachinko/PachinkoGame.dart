@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'models/GameLogic.dart';
+import 'models/GameEventBus.dart';
 import 'PachinkoGameWorld.dart';
 import 'PuppyGameWorld.dart';
 import 'hud/hud_controller.dart';
@@ -28,6 +29,9 @@ class _PachinkoGameState extends State<PachinkoGame> {
   late HudController hudController;
   late ValueNotifier<double> treatPreviewXNotifier;
 
+  // Event stream subscription (single stream for all events)
+  late StreamSubscription<GameEvent> _eventSubscription;
+
   // Animation coordination
   bool _isAnimating = false;
 
@@ -39,15 +43,25 @@ class _PachinkoGameState extends State<PachinkoGame> {
 
     gameWorld = PachinkoGameWorld(
       game: game,
-      onPegHitCallback: onPegHit,
-      onTreatCaughtCallback: onTreatCaught,
     );
     puppyGameWorld = PuppyGameWorld();
     treatPreviewXNotifier = ValueNotifier<double>(0.0);
+
+    // Subscribe to all game events with type checking
+    _eventSubscription = GameEventBus.instance.gameEvents.listen((event) {
+      if (event is PegHitEvent) {
+        onPegHit();
+      } else if (event is TreatCaughtEvent) {
+        onTreatCaught(event.multiplier);
+      }
+    });
   }
 
   @override
   void dispose() {
+    // Cancel event subscription to prevent memory leaks
+    _eventSubscription.cancel();
+
     hudController.dispose();
     treatPreviewXNotifier.dispose();
     super.dispose();

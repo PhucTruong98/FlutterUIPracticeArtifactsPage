@@ -6,6 +6,7 @@ import 'TreatBody.dart';
 import 'WallBody.dart';
 import '../PachinkoGameWorld.dart';
 import '../PachinkoAssets.dart';
+import '../models/GameEventBus.dart';
 
 /// Sensor zone for individual slot with score multiplier
 class SlotZone extends BodyComponent with ContactCallbacks {
@@ -120,11 +121,8 @@ class SlotZone extends BodyComponent with ContactCallbacks {
   @override
   void beginContact(Object other, Contact contact) {
     if (other is TreatBody) {
-      // Update game logic
-      // _game.game.treatCaught(multiplier: multiplier);
-
-      // Trigger coordinator callback (async, fire-and-forget)
-      unawaited(_game.onTreatCaughtCallback(multiplier));
+      // Emit event to coordinator
+      GameEventBus.instance.emit(TreatCaughtEvent(multiplier));
 
       // Use a timer to delay removal slightly for visual feedback
       final timer = TimerComponent(
