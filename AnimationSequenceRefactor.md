@@ -1,167 +1,235 @@
-Refactor the `PuppyComponent` animation system into a dedicated `PuppyAnimationController` that is solely responsible for animation flow.
+Refactor the puppy animation system from a simple state-transition graph into an animation sequence engine.
 
-## Goal
+## Background
 
-Currently, animation logic is split between:
+The current controller assumes every animation has exactly one predetermined next state.
 
-* `_setState()`
-* `_processQueue()`
-* `_animationQueue`
-* `_isPlayingQueued`
-* `TimerComponent` transition logic
+Example:
 
-This results in two different systems making animation decisions.
+Eating -> Happy -> Idle
 
-Instead, create a dedicated `PuppyAnimationController` that becomes the single source of truth for:
+LevelUp -> Idle
 
-* current animation
-* animation queue
-* animation transitions
-* animation completion
-* deciding what animation plays next
+This works for simple linear animations but is too limiting.
 
-The `PuppyComponent` should become mostly a rendering component that delegates animation behavior to the controller.
+Examples that are difficult with the current architecture:
 
----
+* Petting the puppy
+* Random idle behaviors
+* Different celebration chains
+* Reusing the same animation in different contexts
+* Branching animation flows
+* User interaction during an animation
 
-## Desired architecture
-
-```
-Game Events
-     │
-     ▼
-PuppyAnimationController
-     │
-     ▼
-PuppyComponent (SpriteAnimationComponent)
-```
-
-The controller owns all animation sequencing.
-
-The component should not contain queue logic or transition logic.
+I want to move away from a fixed "nextState" graph.
 
 ---
 
-## Controller responsibilities
+# Goal
 
-Create a `PuppyAnimationController` class.
+The animation controller should become a generic animation sequencing engine.
 
-It should own:
-
-* current animation/state
-* queue of pending animations
-* transition rules
-* completion callbacks
-* play/queue APIs
-
-Public API should look similar to:
+Instead of saying
 
 ```dart
 controller.play(PuppyState.eating);
-
-controller.queue(PuppyState.levelUp);
-
-controller.queue(PuppyState.levelUp);
 ```
 
-The caller should not need to know whether an animation interrupts immediately or gets queued.
-
-The controller decides.
-
----
-
-## Queue behavior
-
-Replace the current `_animationQueue` implementation with a real queue (`Queue<T>` from `dart:collection`).
-
-The queue should contain animation requests.
-
-When an animation finishes:
-
-* if queue is empty → transition to Idle
-* otherwise → dequeue next animation and play it
-
-The controller should be the only place that decides this.
-
----
-
-## Transition rules
-
-Instead of a large `_setState()` method with multiple `if/else` branches, move transition behavior into the controller.
-
-Each animation should define its next animation.
-
-For example:
-
-Eating
-→ Happy
-
-Happy
-→ Idle
-
-LevelUp
-→ Idle
-
-The controller should automatically follow these transitions when an animation completes.
-
----
-
-## Animation durations
-
-Do not hardcode animation durations like:
+I should be able to build animation sequences like
 
 ```dart
-period: 1.04
+AnimationSequence([
+    PuppyState.eating,
+    PuppyState.happy,
+    PuppyState.idle,
+]);
 ```
 
-Instead derive the duration from the SpriteAnimation itself if possible (frame count × stepTime or another Flame API).
+or
 
-The goal is for artists to be able to change frame counts without requiring code changes.
+```dart
+AnimationSequence([
+    PuppyState.bark,
+    PuppyState.tailWag,
+    PuppyState.idle,
+]);
+```
 
----
+or
 
-## State
+```dart
+AnimationSequence([
+    PuppyState.jump,
+    PuppyState.spin,
+    PuppyState.levelUp,
+    PuppyState.idle,
+]);
+```
 
-Keep `PuppyState` for now.
+The controller's responsibility is simply executing sequences.
 
-However, the controller should become the only class responsible for changing it.
-
-`PuppyComponent` should never manually transition between states.
-
----
-
-## Timers
-
-If Flame provides a way to detect when a non-looping animation finishes, prefer that over manually hardcoding timers.
-
-If not, derive timer durations dynamically from the animation instead of using constants.
-
----
-
-## Component responsibilities
-
-After refactoring, `PuppyComponent` should primarily:
-
-* load animations
-* render the current animation
-* expose high-level methods like `celebrateTreat()` or `queueLevelUp()`, which simply delegate to the controller
-* forward update/completion events if needed
-
-It should not manage queue state or transition state itself.
+It should not know why a sequence exists.
 
 ---
 
-## Code quality goals
+# Responsibilities of the controller
 
-* Single Responsibility Principle
-* One "brain" responsible for animation sequencing
-* Easy to add future animations (Sniff, Bark, Dance, Sleep, etc.) without modifying controller logic
-* No duplicated transition logic
-* No circular flow between queue processing and state transitions
-* Clean, extensible, object-oriented design
+The controller should own:
 
-When complete, explain:
+* current animation
+* currently executing sequence
+* queue of sequences
+* animation completion
+* moving to the next animation in the current sequence
+* starting the next queued sequence when the current one finishes
+
+The controller should NOT contain hardcoded logic like
+
+Eating -> Happy
+
+Happy -> Idle
+
+Those relationships should exist only inside the sequence that requested them.
+
+---
+
+# AnimationSequence
+
+Create an AnimationSequence class.
+
+Example API:
+
+```dart
+AnimationSequence([
+    PuppyState.eating,
+    PuppyState.happy,
+    PuppyState.idle,
+]);
+```
+
+The sequence should internally keep track of which animation is currently executing.
+
+The controller simply asks the sequence for the next animation until it completes.
+
+---
+
+# Queue
+
+The queue should become
+
+```dart
+Queue<AnimationSequence>
+```
+
+instead of
+
+```dart
+Queue<PuppyState>
+```
+
+Only one sequence executes at a time.
+
+When a sequence finishes:
+
+* if another sequence exists, start it
+* otherwise return to Idle
+
+---
+
+# Completion
+
+The controller should advance through a sequence whenever an animation completes.
+
+If possible, prefer animation completion callbacks over hardcoded timers.
+
+If timers are required, derive the duration from the animation instead of hardcoding values.
+
+---
+
+# No hardcoded transition graph
+
+Remove:
+
+* transition rules map
+* nextState definitions
+* hardcoded state graph
+
+The controller should never know that Eating normally leads to Happy.
+
+That relationship belongs to the sequence that requested it.
+
+---
+
+# Extensibility
+
+The design should make it easy to support future systems like:
+
+CelebrateTreatBehavior
+
+PetBehavior
+
+SleepBehavior
+
+RandomIdleBehavior
+
+LevelUpBehavior
+
+Those systems should only create AnimationSequence objects.
+
+They should not modify controller internals.
+
+---
+
+# Example usage
+
+These should all be possible:
+
+```dart
+controller.play(
+    AnimationSequence([
+        PuppyState.eating,
+        PuppyState.happy,
+        PuppyState.idle,
+    ]),
+);
+```
+
+```dart
+controller.queue(
+    AnimationSequence([
+        PuppyState.jump,
+        PuppyState.spin,
+        PuppyState.idle,
+    ]),
+);
+```
+
+```dart
+controller.queue(
+    AnimationSequence([
+        PuppyState.bark,
+        PuppyState.tailWag,
+        PuppyState.idle,
+    ]),
+);
+```
+
+The controller should simply execute sequences in order.
+
+---
+
+# Code quality goals
+
+* Single responsibility
+* No hardcoded animation graph
+* Sequence-driven instead of graph-driven
+* Easy to add new animations without modifying the controller
+* Easy to build future behavior classes on top of this
+* Clean object-oriented design
+
+After implementing, explain:
 
 1. The new architecture.
-2. Why it is easier to extend.
-3. Any tradeoffs introduced.
+2. How animation sequences work.
+3. Why this design is more extensible than a fixed transition graph.
+4. How future behavior classes would be built on top of it.

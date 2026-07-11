@@ -1,31 +1,18 @@
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import '../PachinkoAssets.dart';
-
-/// Enum representing puppy animation states
-enum PuppyState {
-  idle,    // Looping idle animation
-  eating,  // One-shot eating animation
-  happy,   // One-shot happy celebration
-  levelUp,   // One-shot levelUp celebration
-
-
-}
+import 'PuppyAnimationController.dart';
+import 'AnimationSequence.dart';
 
 /// Animated puppy component that reacts to treats
 ///
 /// Uses sprite sheet animations for smooth frame-by-frame animations.
-/// Supports animation queueing for level-up events.
+/// Delegates animation sequencing to PuppyAnimationController.
 class PuppyComponent extends SpriteAnimationComponent {
   final PachinkoAssets assets;
 
-  PuppyState _state = PuppyState.idle;
-  TimerComponent? _stateTransitionTimer;
-
-  // Animation queue for level-ups
-  final List<PuppyState> _animationQueue = [];
-  bool _isPlayingQueued = false;
+  // Animation controller manages state machine and queue
+  late PuppyAnimationController _animationController;
 
   // Cached animations
   late SpriteAnimation _idleAnimation;
@@ -44,7 +31,7 @@ class PuppyComponent extends SpriteAnimationComponent {
         );
 
   /// Public getter for current state
-  PuppyState get state => _state;
+  PuppyState get state => _animationController.currentState;
 
   @override
   Future<void> onLoad() async {
@@ -56,6 +43,15 @@ class PuppyComponent extends SpriteAnimationComponent {
     _happyAnimation = assets.dogHappyAnimation;
     _levelUpAnimation = assets.dogLevelUpAnimation;
 
+    // Initialize animation controller with duration lookup function
+    _animationController = PuppyAnimationController(
+      getDuration: assets.getDuration,
+    );
+
+    // Register callback to update animation when state changes
+    _animationController.onStateChanged = (newState) {
+      animation = _getAnimationForState(newState);
+    };
 
     // Set initial animation to idle
     animation = _idleAnimation;
@@ -63,79 +59,30 @@ class PuppyComponent extends SpriteAnimationComponent {
 
   /// Trigger celebration animation when puppy receives treat
   void celebrateTreat() {
-    if (_state == PuppyState.eating || _state == PuppyState.happy) {
-      return; // Already celebrating
-    }
-
-    _setState(PuppyState.eating);
+    _animationController.play(
+      AnimationSequence([
+        PuppyState.eating,
+        PuppyState.happy,
+        // PuppyState.idle,
+      ]),
+    );
   }
 
   /// Queue a level-up animation (can be called multiple times)
   /// Animations will play sequentially without interruption
   void queueLevelUp() {
-    _animationQueue.add(PuppyState.levelUp);
-    _processQueue();
+    _animationController.queue(
+      AnimationSequence([
+        PuppyState.levelUp,
+        // PuppyState.idle,
+      ]),
+    );
   }
 
-  /// Process queued animations
-  void _processQueue() {
-    // Don't start new queued animation if currently playing one
-    if (_isPlayingQueued || _animationQueue.isEmpty) return;
-
-    // Only play queued animations when in idle state
-    if (_state != PuppyState.idle) return;
-
-    _isPlayingQueued = true;
-    final nextState = _animationQueue.removeAt(0);
-    _setState(nextState);
-  }
-
-  /// Update puppy state and animation
-  void _setState(PuppyState newState) {
-    if (_state == newState) return;
-
-    _state = newState;
-    animation = _getAnimationForState(_state);
-
-    // Cancel any pending transition
-    _stateTransitionTimer?.removeFromParent();
-
-    // Schedule state transitions
-    if (_state == PuppyState.eating) {
-      // After eating animation finishes, transition to happy
-      _stateTransitionTimer = TimerComponent(
-        period: 0.9, // 9 frames × 0.1s
-        repeat: false,
-        onTick: () => _setState(PuppyState.happy),
-        removeOnFinish: true,
-      );
-      add(_stateTransitionTimer!);
-    } else if (_state == PuppyState.happy) {
-      // After happy animation finishes, return to idle
-      _stateTransitionTimer = TimerComponent(
-        period: 1.04, // 13 frames × 0.08s
-        repeat: false,
-        onTick: () => _setState(PuppyState.idle),
-        removeOnFinish: true,
-      );
-      add(_stateTransitionTimer!);
-    } else if (_state == PuppyState.levelUp) {
-      // After levelUp animation finishes, return to idle and process queue
-      _stateTransitionTimer = TimerComponent(
-        period: 1.04, // 13 frames × 0.08s (adjust based on actual levelUp animation duration)
-        repeat: false,
-        onTick: () {
-          _isPlayingQueued = false;
-          _setState(PuppyState.idle);
-          _processQueue(); // Process next queued animation if any
-        },
-        removeOnFinish: true,
-      );
-      add(_stateTransitionTimer!);
-    } else if (_state == PuppyState.idle) {
-      // Returning to idle - check if there are queued animations
-      _processQueue();
-    }
+  @override
+  void update(double dt) {
+    super.update(dt);
+    // No sync needed - controller notifies us via onStateChanged callback
   }
 
   /// Get animation for given state
@@ -154,7 +101,7 @@ class PuppyComponent extends SpriteAnimationComponent {
 
   @override
   void onRemove() {
-    _stateTransitionTimer?.removeFromParent();
+    _animationController.dispose();
     super.onRemove();
   }
 }

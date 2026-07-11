@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/cache.dart';
+import 'components/PuppyAnimationController.dart';
 
 /// Centralized asset loader for Pachinko pixel art sprites
 ///
@@ -146,4 +147,33 @@ class PachinkoAssets {
           loop: false,
         ),
       );
+
+  // Animation duration helpers
+  // Calculated from frame count × step time
+
+  /// Duration of dog eating animation in seconds
+  double get dogEatingDuration => 9 * 0.1; // 0.9s
+
+  /// Duration of dog happy animation in seconds
+  double get dogHappyDuration => 13 * 0.08; // 1.04s
+
+  /// Duration of dog level-up animation in seconds
+  double get dogLevelUpDuration => 13 * 0.08; // 1.04s
+
+  /// Get animation duration by state
+  ///
+  /// This function is used by PuppyAnimationController to lookup
+  /// how long each animation should play before transitioning.
+  double getDuration(PuppyState state) {
+    switch (state) {
+      case PuppyState.eating:
+        return dogEatingDuration;
+      case PuppyState.happy:
+        return dogHappyDuration;
+      case PuppyState.levelUp:
+        return dogLevelUpDuration;
+      case PuppyState.idle:
+        return 0; // Idle loops forever, no transition
+    }
+  }
 }
