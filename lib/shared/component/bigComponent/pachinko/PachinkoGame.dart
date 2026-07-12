@@ -53,6 +53,8 @@ class _PachinkoGameState extends State<PachinkoGame> {
         onPegHit();
       } else if (event is TreatCaughtEvent) {
         onTreatCaught(event.multiplier);
+      } else if (event is LevelUpEvent) {
+        puppyGameWorld.playLevelUpAnimation();
       }
     });
   }
@@ -104,10 +106,6 @@ class _PachinkoGameState extends State<PachinkoGame> {
     await hudController.onTreatCaught(
       finalScore: finalScore,
       currentEnergy: hudController.energy.displayEnergy,
-      onEachLevelUp: () {
-        // Callback during each flash - trigger puppy level-up animation
-        puppyGameWorld.playLevelUpAnimation();
-      },
     );
   }
 

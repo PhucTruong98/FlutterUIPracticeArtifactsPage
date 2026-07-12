@@ -22,16 +22,12 @@ class HudController {
 
 
   /// Cross-element event: treat caught.
-  /// Delegates to energy controller with optional level-up callback.
+  /// Delegates to energy controller (level-up events emitted via GameEventBus).
   Future<void> onTreatCaught({
     required int finalScore,
     required double currentEnergy,
-    void Function()? onEachLevelUp,
   }) async {
-    await energy.onTreatCaught(
-      finalScore,
-      onLevelUp: onEachLevelUp,
-    );
+    await energy.onTreatCaught(finalScore);
 
     // Reset round score
     score.resetRound();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'hud_element_controller.dart';
 import '../config/PachinkoConfig.dart';
+import '../models/GameEventBus.dart';
 
 class EnergyBarController extends HudElementController {
   EnergyBarController({required this.maxEnergy});
@@ -64,7 +65,7 @@ class EnergyBarController extends HudElementController {
     return true;
   }
 
-  Future<void> onTreatCaught(int newScore, {void Function()? onLevelUp}) async {
+  Future<void> onTreatCaught(int newScore) async {
     final gen = beginSequence();
     var newTotalEnergy = displayEnergy + newScore;
 
@@ -73,8 +74,8 @@ class EnergyBarController extends HudElementController {
       if (!await _animateFill(displayEnergy / maxEnergy, 1.0, gen)) return;
       if (!await _flashCycles(PachinkoConfig.levelFlashCycles, gen)) return;
 
-      // Trigger level-up callback after flash completes
-      onLevelUp?.call();
+      // Emit level-up event after flash completes
+      GameEventBus.instance.emit(const LevelUpEvent());
 
       //update text
       level++;

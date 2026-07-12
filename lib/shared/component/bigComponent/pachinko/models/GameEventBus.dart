@@ -17,6 +17,11 @@ class TreatCaughtEvent extends GameEvent {
   const TreatCaughtEvent(this.multiplier);
 }
 
+/// Event emitted when puppy levels up
+class LevelUpEvent extends GameEvent {
+  const LevelUpEvent();
+}
+
 /// Centralized event bus for Pachinko game events
 ///
 /// Uses a single broadcast stream for all game events.
