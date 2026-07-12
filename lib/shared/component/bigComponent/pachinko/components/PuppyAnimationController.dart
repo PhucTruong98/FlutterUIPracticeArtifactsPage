@@ -33,6 +33,9 @@ class PuppyAnimationController {
   // Cancellation flag for dispose
   bool _disposed = false;
 
+  // Processing flag to prevent concurrent processQueue() calls
+  bool _isProcessing = false;
+
   /// Constructor - requires duration lookup function
   PuppyAnimationController({
     required this.getDuration,
@@ -49,83 +52,79 @@ class PuppyAnimationController {
 
   /// Play an animation sequence immediately if idle, or queue it if busy
   void play(AnimationSequence sequence) {
-    if (_currentSequence == null && _sequenceQueue.isEmpty) {
-      // Not executing anything → set synchronously and start
-      _currentSequence = sequence;
-      unawaited(_executeSequence(sequence));
-    } else {
-      // Currently busy → queue it
-      _sequenceQueue.add(sequence);
-    }
+    _sequenceQueue.add(sequence);
+    unawaited(processQueue());
   }
 
   /// Queue an animation sequence to play after current sequence(s)
   void queue(AnimationSequence sequence) {
-    if (_currentSequence == null && _sequenceQueue.isEmpty) {
-      // If idle with empty queue, start immediately
-      _currentSequence = sequence;
-      unawaited(_executeSequence(sequence));
-    } else {
-      // Otherwise queue for later
       _sequenceQueue.add(sequence);
-    }
+      unawaited(processQueue());
+    
   }
 
   /// Dispose of resources
   void dispose() {
     _disposed = true;
+    _isProcessing = false;
     _sequenceQueue.clear();
     _currentSequence = null;
   }
 
-  /// Execute a sequence (note: _currentSequence already set synchronously by caller)
+  Future<void> processQueue() async {
+    // Guard: only one processQueue() can run at a time
+    if (_isProcessing) return;
+
+    _isProcessing = true;
+
+    try {
+      while (_sequenceQueue.isNotEmpty && !_disposed) {
+        final sequence = _sequenceQueue.removeFirst();
+        await _executeSequence(sequence);
+      }
+
+      // All sequences processed - return to idle
+      _currentSequence = null;
+      if (!_disposed) {
+        _setState(PuppyState.idle);
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  /// Execute a single sequence
   Future<void> _executeSequence(AnimationSequence sequence) async {
-    // Outer loop: process current sequence and all queued sequences
-    while (true) {
-      if (_disposed) return;
+    if (_disposed) return;
 
-      sequence.reset(); // Ensure sequence starts from beginning
+    _currentSequence = sequence;
+    sequence.reset(); // Ensure sequence starts from beginning
 
-      // Inner loop: play all animations in current sequence (except last)
-      while (!_currentSequence!.isComplete && !_disposed) {
-        final animation = _currentSequence!.currentAnimation;
-        _setState(animation);
+    // Inner loop: play all animations in current sequence (except last)
+    while (!_currentSequence!.isComplete && !_disposed) {
+      final animation = _currentSequence!.currentAnimation;
+      _setState(animation);
 
-        // Schedule transition to next animation after duration
-        final duration = getDuration(animation);
-        await Future.delayed(Duration(milliseconds: (duration * 1000).round()));
-
-        if (_disposed) return;
-        _currentSequence!.advance();
-      }
+      // Schedule transition to next animation after duration
+      final duration = getDuration(animation);
+      await Future.delayed(Duration(milliseconds: (duration * 1000).round()));
 
       if (_disposed) return;
-
-      // Play the last animation
-      final lastAnimation = _currentSequence!.currentAnimation;
-      _setState(lastAnimation);
-      final lastDuration = getDuration(lastAnimation);
-      if (lastDuration > 0) {
-        await Future.delayed(Duration(milliseconds: (lastDuration * 1000).round()));
-      }
-
-      if (_disposed) return;
-
-      // Check if there are more sequences to process
-      if (_sequenceQueue.isEmpty) {
-        break; // Exit outer loop - no more sequences
-      }
-
-      // Pop next sequence and continue outer loop
-      final nextSequence = _sequenceQueue.removeFirst();
-      _currentSequence = nextSequence;
-      sequence = nextSequence;
+      _currentSequence!.advance();
     }
 
-    // All sequences processed - return to idle
-    _currentSequence = null;
-    _setState(PuppyState.idle);
+    if (_disposed) return;
+
+    // Play the last animation
+    final lastAnimation = _currentSequence!.currentAnimation;
+    _setState(lastAnimation);
+    final lastDuration = getDuration(lastAnimation);
+    if (lastDuration > 0) {
+      await Future.delayed(Duration(milliseconds: (lastDuration * 1000).round()));
+    }
   }
+
+
 
   /// Set current animation state
   void _setState(PuppyState newState) {

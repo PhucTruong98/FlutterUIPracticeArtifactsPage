@@ -59,7 +59,7 @@ class PuppyComponent extends SpriteAnimationComponent {
 
   /// Trigger celebration animation when puppy receives treat
   void celebrateTreat() {
-    _animationController.play(
+    _animationController.queue(
       AnimationSequence([
         PuppyState.eating,
         PuppyState.happy,
