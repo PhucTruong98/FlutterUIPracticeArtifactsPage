@@ -121,8 +121,9 @@ class SlotZone extends BodyComponent with ContactCallbacks {
   @override
   void beginContact(Object other, Contact contact) {
     if (other is TreatBody) {
-      // Emit event to coordinator
+      // Emit events to coordinator
       GameEventBus.instance.emit(TreatCaughtEvent(multiplier));
+      GameEventBus.instance.emit(ConfettiSpawnEvent(position.clone(), multiplier));
 
       // Use a timer to delay removal slightly for visual feedback
       final timer = TimerComponent(

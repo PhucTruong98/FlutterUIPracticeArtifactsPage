@@ -55,6 +55,8 @@ class _PachinkoGameState extends State<PachinkoGame> {
         onTreatCaught(event.multiplier);
       } else if (event is LevelUpEvent) {
         puppyGameWorld.playLevelUpAnimation();
+      } else if (event is ConfettiSpawnEvent) {
+        gameWorld.spawnConfetti(event.position, event.multiplier);
       }
     });
   }

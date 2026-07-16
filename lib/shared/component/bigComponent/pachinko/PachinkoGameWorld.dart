@@ -8,6 +8,7 @@ import 'components/TreatBody.dart';
 import 'components/PegBody.dart';
 import 'components/WallBody.dart';
 import 'components/SlotZone.dart';
+import 'components/ConfettiEffect.dart';
 import 'PachinkoAssets.dart';
 import 'models/GameLogic.dart';
 import 'config/PachinkoConfig.dart';
@@ -206,6 +207,20 @@ class PachinkoGameWorld extends Forge2DGame {
     // // Cancel miss timer if active
     // _treatMissTimer?.removeFromParent();
     // _treatMissTimer = null;
+  }
+
+  /// Spawn confetti particle effect at the given position
+  ///
+  /// Called when treat lands in slot. Effect intensity varies by multiplier:
+  /// - 1.2x: Small green burst
+  /// - 1.5x: Medium orange burst
+  /// - 1.7x: PREMIUM rainbow burst with sparkles
+  void spawnConfetti(Vector2 position, double multiplier) {
+    final confetti = ConfettiEffect(
+      position: position,
+      multiplier: multiplier,
+    );
+    world.add(confetti);
   }
 
   // /// Handle treat miss (timeout or settled)

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flame/components.dart';
 
 /// Base class for all game events
 abstract class GameEvent {
@@ -20,6 +21,14 @@ class TreatCaughtEvent extends GameEvent {
 /// Event emitted when puppy levels up
 class LevelUpEvent extends GameEvent {
   const LevelUpEvent();
+}
+
+/// Event emitted when confetti should spawn at a position
+class ConfettiSpawnEvent extends GameEvent {
+  final Vector2 position;
+  final double multiplier;
+
+  const ConfettiSpawnEvent(this.position, this.multiplier);
 }
 
 /// Centralized event bus for Pachinko game events
