@@ -51,6 +51,12 @@ class PachinkoConfig {
   /// Treat mass/weight density
   static const double treatDensity = 10.0;
 
+  /// Treat oscillation speed when loaded (units per second)
+  static const double treatOscillationSpeed = 10.0;
+
+  /// Maximum X position for treat oscillation (leaves margin from wall)
+  static double get treatOscillationMaxX => boardWidth / 2 - 0.5;
+
   // --- Wall Physics ---
   /// Wall bounciness coefficient
   static const double wallRestitution = 0.5;

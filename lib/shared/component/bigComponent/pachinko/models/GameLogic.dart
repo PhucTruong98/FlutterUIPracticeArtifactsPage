@@ -11,6 +11,8 @@ class GameLogic {
   int currentRoundScore;
   int currentRoundCollisions;
 
+  double statusMessageHeight = 16.0;
+
   GameLogic({
     int? remainingTreats,
     this.isTreatLoaded = false,
@@ -34,6 +36,7 @@ class GameLogic {
       remainingTreats--;
       isTreatLoaded = true;
       statusMessage = 'Tap to Drop';
+      statusMessageHeight = 200.0;
       return true;
     }
     return false;
@@ -44,6 +47,7 @@ class GameLogic {
     if (isTreatLoaded) {
       isTreatLoaded = false;
       statusMessage = null;
+      statusMessageHeight = 16.0;
       return true;
     }
     return false;

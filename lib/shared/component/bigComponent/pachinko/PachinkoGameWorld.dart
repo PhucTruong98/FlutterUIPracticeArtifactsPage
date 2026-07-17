@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
@@ -14,7 +15,7 @@ import 'models/GameLogic.dart';
 import 'config/PachinkoConfig.dart';
 
 /// Main Forge2D game world for Pachinko physics simulation
-class PachinkoGameWorld extends Forge2DGame {
+class PachinkoGameWorld extends Forge2DGame with TapCallbacks {
   final GameLogic game;
 
   TreatBody? currentTreat;
@@ -221,6 +222,31 @@ class PachinkoGameWorld extends Forge2DGame {
       multiplier: multiplier,
     );
     world.add(confetti);
+  }
+
+  /// Spawn oscillating treat at top center of board
+  /// Treat starts oscillating automatically (created with kinematic body)
+  void spawnOscillatingTreat() {
+    if (currentTreat != null) {
+      return; // Only one treat at a time
+    }
+
+    currentTreat = TreatBody(
+      position: Vector2(0, -PachinkoConfig.boardHeight / 2 + 2), // Center top
+      radius: PachinkoConfig.treatRadius,
+      assets: pachinkoAssets,
+    );
+
+    world.add(currentTreat!);
+  }
+
+  /// Handle tap events to drop oscillating treat
+  @override
+  void onTapDown(TapDownEvent event) {
+    if (currentTreat?.isOscillating == true) {
+      currentTreat!.drop();
+      game.dropTreat(); // Update game logic state
+    }
   }
 
   // /// Handle treat miss (timeout or settled)

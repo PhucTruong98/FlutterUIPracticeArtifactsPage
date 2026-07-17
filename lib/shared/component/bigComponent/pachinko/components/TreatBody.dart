@@ -6,12 +6,18 @@ import '../PachinkoAssets.dart';
 import '../config/PachinkoConfig.dart';
 
 /// Dynamic physics body for the falling treat (dog bone)
+/// Starts in oscillating state (kinematic body moving left-right)
 class TreatBody extends BodyComponent with ContactCallbacks {
   final Vector2 position;
   final double radius;
   final PachinkoAssets assets;  // Asset manager for sprites
 
   late SpriteComponent _spriteComponent;
+
+  // Oscillation state - starts as true (oscillating by default)
+  bool isOscillating = true;
+  final double oscillationSpeed = PachinkoConfig.treatOscillationSpeed;
+  final double maxX = PachinkoConfig.treatOscillationMaxX;
 
   TreatBody({
     required this.position,
@@ -39,12 +45,13 @@ class TreatBody extends BodyComponent with ContactCallbacks {
   @override
   Body createBody() {
     final bodyDef = BodyDef(
-      type: BodyType.dynamic,
+      type: BodyType.kinematic,  // Start as kinematic (oscillating)
       position: position,
       userData: this,
+      linearVelocity: Vector2(oscillationSpeed, 0),  // Start moving right
     );
 
-    final body = world.createBody(bodyDef);
+    body = world.createBody(bodyDef);
 
     // Create circular shape for physics
     final shape = CircleShape()..radius = radius;
@@ -66,5 +73,34 @@ class TreatBody extends BodyComponent with ContactCallbacks {
     // Contact logic handled by other components:
     // - PegBody: Handles peg collisions and scoring
     // - SlotZone: Handles treat catching with multipliers
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    // Handle oscillation boundary checking and reversal
+    if (isOscillating && body.bodyType == BodyType.kinematic) {
+      final currentX = body.position.x;
+
+      // Reverse direction if treat reaches boundaries
+      if (currentX >= maxX || currentX <= -maxX) {
+        body.linearVelocity = Vector2(-body.linearVelocity.x, 0);
+      }
+    }
+  }
+
+  /// Start oscillating left-right at the top of the board
+  void startOscillating() {
+    body.setType(BodyType.kinematic);
+    body.linearVelocity = Vector2(oscillationSpeed, 0); // Start moving right
+    isOscillating = true;
+  }
+
+  /// Drop the treat (switch to normal physics)
+  void drop() {
+    isOscillating = false;
+    body.linearVelocity = Vector2.zero();
+    body.setType(BodyType.dynamic);
   }
 }

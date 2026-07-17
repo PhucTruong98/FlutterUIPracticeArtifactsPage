@@ -27,7 +27,6 @@ class _PachinkoGameState extends State<PachinkoGame> {
   late PachinkoGameWorld gameWorld;
   late PuppyGameWorld puppyGameWorld;
   late HudController hudController;
-  late ValueNotifier<double> treatPreviewXNotifier;
 
   // Event stream subscription (single stream for all events)
   late StreamSubscription<GameEvent> _eventSubscription;
@@ -45,7 +44,6 @@ class _PachinkoGameState extends State<PachinkoGame> {
       game: game,
     );
     puppyGameWorld = PuppyGameWorld();
-    treatPreviewXNotifier = ValueNotifier<double>(0.0);
 
     // Subscribe to all game events with type checking
     _eventSubscription = GameEventBus.instance.gameEvents.listen((event) {
@@ -67,7 +65,6 @@ class _PachinkoGameState extends State<PachinkoGame> {
     _eventSubscription.cancel();
 
     hudController.dispose();
-    treatPreviewXNotifier.dispose();
     super.dispose();
   }
 
@@ -121,24 +118,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
     if (_isAnimating) return;  // Block during animations
 
     if (game.loadTreat() && gameWorld.currentTreat == null) {
-      treatPreviewXNotifier.value = 0.0;
-      setState(() {});
-    }
-  }
-
-  void _dropTreat() {
-    if (_isAnimating) return;  // Block during animations
-
-    if (game.dropTreat()) {
-      // Constrain X position between walls (with margin for treat radius)
-      final maxX = PachinkoGameWorld.boardWidth / 2 - 1;
-      final minX = -maxX;
-      final clampedX = treatPreviewXNotifier.value.clamp(minX, maxX);
-
-      // Now spawn treat at chosen position
-      gameWorld.spawnTreat(
-        position: Vector2(clampedX, -PachinkoGameWorld.boardHeight / 2 + 2),
-      );
+      gameWorld.spawnOscillatingTreat();
       setState(() {});
     }
   }
@@ -205,80 +185,10 @@ class _PachinkoGameState extends State<PachinkoGame> {
                       ),
                     ),
 
-                    // Treat aiming overlay (shown when treat is loaded, not dropped yet)
-                    if (game.isTreatLoaded)
-                      LayoutBuilder(
-                          builder: (context, constraints) {
-                            return ValueListenableBuilder(
-                              valueListenable: treatPreviewXNotifier,
-                              builder: (context, treatX, child) {
-                                return GestureDetector(
-                                  onHorizontalDragUpdate: (details) {
-                                    // Update synchronously - no addPostFrameCallback needed
-                                    final screenWidth = constraints.maxWidth;
-                                    final boardWidth = PachinkoGameWorld.boardWidth;
-                                    final normalizedX = (details.localPosition.dx / screenWidth) * 2 - 1;
-
-                                    // Clamp immediately to match drop behavior
-                                    final maxX = boardWidth / 2 - 1;
-                                    final clampedX = (normalizedX * (boardWidth / 2)).clamp(-maxX, maxX);
-                                    treatPreviewXNotifier.value = clampedX;
-                                  },
-                                  onTapDown: (details) {
-                                    // Set position and drop
-                                    final screenWidth = constraints.maxWidth;
-                                    final boardWidth = PachinkoGameWorld.boardWidth;
-                                    final normalizedX = (details.localPosition.dx / screenWidth) * 2 - 1;
-
-                                    // Clamp immediately
-                                    final maxX = boardWidth / 2 - 1;
-                                    final clampedX = (normalizedX * (boardWidth / 2)).clamp(-maxX, maxX);
-                                    treatPreviewXNotifier.value = clampedX;
-
-                                    _dropTreat();
-                                  },
-                                  child: Stack(
-                                    children: [
-                                      // Visual indicator - vertical line at drop position
-                                      Positioned.fill(
-                                        child: CustomPaint(
-                                          painter: _TreatPreviewPainter(
-                                            treatX: treatX,
-                                            boardWidth: PachinkoGameWorld.boardWidth,
-                                          ),
-                                        ),
-                                      ),
-                                      // Instruction text
-                                      Center(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
-                                          ),
-                                          decoration: PixelArtTheme.pixelContainer(
-                                            color: Colors.white,
-                                          ),
-                                          child: Text(
-                                            'DRAG TO AIM - TAP TO DROP',
-                                            style: PixelArtTheme.pixelText(
-                                              fontSize: 8,
-                                              color: PixelArtTheme.background,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-
                     // Status message overlay
                     if (game.statusMessage != null)
                       Positioned(
-                          top: 16,
+                          top: game.statusMessageHeight,
                           left: 0,
                           right: 0,
                           child: Center(
@@ -323,7 +233,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                       Positioned.fill(
                         child: GameWidget(game: puppyGameWorld),
                       ),
-
+            
                       // Layer 2: UI Overlay (Flutter widgets on top)
                       Positioned(
                         right: 16,
@@ -342,7 +252,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                           ],
                         ),
                       ),
-
+            
                       // Game Over Message
                       if (game.isGameOver && gameWorld.currentTreat == null)
                         Positioned(
@@ -402,73 +312,5 @@ class _PachinkoGameState extends State<PachinkoGame> {
         ),
       ),
     );
-  }
-}
-
-/// Custom painter to draw treat drop preview indicator
-class _TreatPreviewPainter extends CustomPainter {
-  final double treatX; // World X coordinate
-  final double boardWidth; // World board width
-
-  _TreatPreviewPainter({
-    required this.treatX,
-    required this.boardWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Convert world X coordinate to screen X coordinate
-    // World X goes from -boardWidth/2 to +boardWidth/2
-    // Screen X goes from 0 to size.width
-    final normalizedX = (treatX / (boardWidth / 2) + 1) / 2; // 0 to 1
-    final screenX = normalizedX * size.width;
-
-    // Draw a dashed vertical line at the drop position
-    final paint = Paint()
-      ..color = Colors.yellow.withValues(alpha: 0.8)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    // Draw dashed line from top to bottom
-    const dashHeight = 10.0;
-    const dashSpace = 5.0;
-    double startY = 0;
-
-    while (startY < size.height) {
-      canvas.drawLine(
-        Offset(screenX, startY),
-        Offset(screenX, startY + dashHeight),
-        paint,
-      );
-      startY += dashHeight + dashSpace;
-    }
-
-    // Draw a small circle at the top to indicate drop point
-    final circlePaint = Paint()
-      ..color = Colors.yellow.withValues(alpha: 0.9)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(
-      Offset(screenX, 20),
-      8,
-      circlePaint,
-    );
-
-    // Draw outline for circle
-    final outlinePaint = Paint()
-      ..color = Colors.orange
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawCircle(
-      Offset(screenX, 20),
-      8,
-      outlinePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_TreatPreviewPainter oldDelegate) {
-    return oldDelegate.treatX != treatX;
   }
 }
