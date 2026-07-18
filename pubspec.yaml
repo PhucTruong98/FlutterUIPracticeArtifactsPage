@@ -38,6 +38,7 @@ dependencies:
   auto_size_text: ^3.0.0
   flame: ^1.35.1
   flame_forge2d: ^0.19.2
+  flame_audio: ^2.11.0
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +67,7 @@ flutter:
     - assets/artifacts.json
     - assets/souvenirsImages/
     - assets/images/pachinko/
+    - assets/audio/pachinko/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

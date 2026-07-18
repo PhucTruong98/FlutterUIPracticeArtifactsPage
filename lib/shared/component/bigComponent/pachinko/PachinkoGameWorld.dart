@@ -11,6 +11,7 @@ import 'components/WallBody.dart';
 import 'components/SlotZone.dart';
 import 'components/ConfettiEffect.dart';
 import 'PachinkoAssets.dart';
+import 'AudioService.dart';
 import 'models/GameLogic.dart';
 import 'config/PachinkoConfig.dart';
 
@@ -48,6 +49,9 @@ class PachinkoGameWorld extends Forge2DGame with TapCallbacks {
     // Initialize assets with global image cache and preload all images
     pachinkoAssets = PachinkoAssets(Flame.images);
     await pachinkoAssets.loadAll();
+
+    // Preload all audio files
+    await AudioService.instance.loadAll();
 
     // Initialize the board (zoom is set in constructor)
     _createBackground();  // Add background first so it renders behind everything

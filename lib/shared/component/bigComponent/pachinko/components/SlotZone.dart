@@ -7,6 +7,7 @@ import 'TreatBody.dart';
 import 'WallBody.dart';
 import '../PachinkoGameWorld.dart';
 import '../PachinkoAssets.dart';
+import '../AudioService.dart';
 import '../models/GameEventBus.dart';
 
 /// Sensor zone for individual slot with score multiplier
@@ -129,7 +130,8 @@ class SlotZone extends BodyComponent with ContactCallbacks {
       onComplete: () {
         // Trigger confetti at 0.15s (after shrink completes, before stretch)
         GameEventBus.instance.emit(ConfettiSpawnEvent(position.clone(), multiplier));
-        // TODO: Play sound effect here when audio system is ready
+        // Play pop sound effect
+        AudioService.instance.playPopSound();
       },
     );
 
