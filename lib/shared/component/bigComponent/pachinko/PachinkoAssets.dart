@@ -24,7 +24,8 @@ class PachinkoAssets {
   static const String skyBackdropPath = '${_basePath}skyBackDrop.png';
   static const String pipePath = '${_basePath}pipe.png';
   static const String cloudTopPath = '${_basePath}cloudTop.jpg';
-  static const String grassGroundBottomPath = '${_basePath}grassGroundBottom.jpg';
+  static const String grassGroundBottomPath = '${_basePath}grassGroundBottom.png';
+  static const String grassGroundBottom2Path = '${_basePath}grassGroundBottom2.png';
   static const String dogIdlePath = '${_basePath}dogIdle.png';
   static const String dogEatingPath = '${_basePath}dogEating.png';
   static const String dogHappyPath = '${_basePath}dogHappy.png';
@@ -50,6 +51,7 @@ class PachinkoAssets {
       pipePath,
       cloudTopPath,
       grassGroundBottomPath,
+      grassGroundBottom2Path,
       dogIdlePath,
       dogEatingPath,
       dogHappyPath,
@@ -105,6 +107,16 @@ class PachinkoAssets {
   Sprite get grassGroundBottom => Sprite(
         images.fromCache(grassGroundBottomPath),
         // No srcSize - use full image dimensions
+      );
+
+  /// Grass sway animation - 2-frame alternating background
+  SpriteAnimation get grassSwayAnimation => SpriteAnimation.spriteList(
+        [
+          Sprite(images.fromCache(grassGroundBottomPath)),
+          Sprite(images.fromCache(grassGroundBottom2Path)),
+        ],
+        stepTime: 1.0, // 1.5 seconds per frame = 3s full cycle
+        loop: true,
       );
 
   /// Dog sprite sheet animations

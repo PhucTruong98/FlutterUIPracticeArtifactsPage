@@ -61,14 +61,14 @@ class PuppyGameWorld extends FlameGame {
 
   void _createBackground()
   {
-    final background = SpriteComponent(
-      sprite: pachinkoAssets.grassGroundBottom,
+    final background = SpriteAnimationComponent(
+      animation: pachinkoAssets.grassSwayAnimation,
       size: Vector2(size.x, size.y),
       position: Vector2.zero(),
       anchor: Anchor.center,
       paint: Paint()..filterQuality = FilterQuality.none, // Pixel-perfect rendering
 
-      
+
       );
 
     world.add(background);
