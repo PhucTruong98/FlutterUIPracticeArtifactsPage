@@ -161,10 +161,10 @@ class _PachinkoGameState extends State<PachinkoGame> {
             ),
 
             // Middle Section - Pachinko Board
-            Expanded(
-              child: Container(
-                // margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
+            // AspectRatio sizes itself based on width (4:5 ratio)
+            Container(
+              // margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
                   // color: const Color(0xFF8B7355).withOpacity(0.3),
                   // borderRadius: BorderRadius.circular(16),
                   // border: Border.all(
@@ -212,22 +212,15 @@ class _PachinkoGameState extends State<PachinkoGame> {
                         ),
                   ],
                 ),
-              ),
             ),
 
             // Energy Bar Section - Full width between board and puppy world
             HorizontalEnergyBar(controller: hudController.energy),
 
             // Bottom Section - Puppy Animation World + UI Overlay
-            Container(
-                  height: 150, // Fixed height for bottom section
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/pachinko/grassGroundBottom.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Stack(
+            // Expands to fill all remaining vertical space
+            Expanded(
+              child: Stack(
                     children: [
                       // Layer 1: Puppy Game World (Flame animations)
                       Positioned.fill(
@@ -307,7 +300,7 @@ class _PachinkoGameState extends State<PachinkoGame> {
                         ),
                     ],
                   ),
-                ),
+            ),
           ],
         ),
       ),
